@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react';
 // Importing necessary components from 'react-native'
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Text, TextInput } from 'react-native';
 // Importing AuthContext for authentication
 import { AuthContext } from './AuthContext';
-// Importing UI components from '@/components/ui/*'
-import { Text, TextInput, Button } from '@/components/ui';
+// Importing UI components from 'components/ui'
+import { Button } from './components/ui/Button';
 // Importing icons from 'lucide-react-native'
 import { Lock, Mail, AlertCircle } from 'lucide-react-native';
 // Importing SafeAreaView for safe area handling
@@ -28,15 +28,15 @@ export default function LoginScreen({ navigation }) {
   // Function to validate the login form
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!username.trim()) {
       newErrors.username = 'Username is required';
     }
-    
+
     if (!password) {
       newErrors.password = 'Password is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -227,10 +227,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fef2f2',
     borderRadius: 8,
     marginBottom: 20,
-  },
-  errorText: {
-    color: '#ef4444',
-    flex: 1,
   },
   registerContainer: {
     flexDirection: 'row',

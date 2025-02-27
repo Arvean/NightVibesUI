@@ -1,144 +1,125 @@
-import React, { useState, useEffect } from 'react';
-// Importing various UI components from 'lucide-react' and '@/components/ui/*'
-import { Search, Filter, MapPin, Star, Activity, Loader, Map, List, 
-         Clock, Users, TrendingUp, ChevronRight } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-  SheetClose,
-} from '@/components/ui/sheet';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigation } from '@react-navigation/native';
+// Importing various UI components from 'lucide-react'
+import { Search, Filter, MapPin, Star, Activity, Loader, Map, List,
+         Clock, Users, TrendingUp } from 'lucide-react';
+import { ScrollView, View, StyleSheet, Text, ActivityIndicator } from 'react-native'; // Use ScrollView and View from react-native
+import { Button } from './components/ui/Button'; // Corrected import paths
+// TODO: uncomment these when we know where these components are
+// import { Card, CardHeader, CardTitle, CardContent } from '@/components/Card'; // Corrected import paths
+// import { Input } from '@/components/Input'; // Corrected import paths
+// import { Badge } from '@/components/Badge'; // Corrected import paths
+// import { Alert, AlertDescription } from '@/components/Alert';
+// import { Tabs, TabsList, TabsTrigger } from '@/components/Tabs';
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from '@/components/Select';
+// import {
+//   Sheet,
+//   SheetContent,
+//   SheetDescription,
+//   SheetHeader,
+//   SheetTitle,
+//   SheetTrigger,
+//   SheetFooter,
+//   SheetClose,
+// } from '@/components/Sheet';
+import { useTheme } from './context/ThemeContext'; // Import useTheme
+import api from './axiosInstance';
 
 /**
  * VenuePreview Component:
- * - Displays a quick preview of a venue using a HoverCard.
+ * - Displays a quick preview of a venue using a View (instead of HoverCard).
  * - Shows venue name, category, address, capacity, and rating.
  */
-const VenuePreview = ({ venue }) => (
-  <HoverCard>
-    <HoverCardTrigger asChild>
-      <div className="cursor-pointer">
-        <Badge className="bg-blue-500">{venue.name}</Badge>
-      </div>
-    </HoverCardTrigger>
-    <HoverCardContent className="w-80">
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <h4 className="font-semibold">{venue.name}</h4>
-          <Badge variant="outline">{venue.category}</Badge>
-        </div>
-        <div className="text-sm text-muted-foreground flex items-center">
-          <MapPin className="h-4 w-4 mr-1" />
-          {venue.address}
-        </div>
-        <div className="flex justify-between text-sm">
-          <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1" />
-            <span>{venue.current_capacity || 'Not busy'}</span>
-          </div>
-          <div className="flex items-center">
-            <Star className="h-4 w-4 mr-1 text-yellow-500" />
-            <span>{venue.rating?.toFixed(1) || 'New'}</span>
-          </div>
-        </div>
-      </div>
-    </HoverCardContent>
-  </HoverCard>
-);
+const VenuePreview = ({ venue }) => {
+    const { colors } = useTheme();
+    return (
+    <View style={styles.venuePreview}>
+        <View style={styles.venuePreviewHeader}>
+        <Text style={styles.venuePreviewName}>{venue.name}</Text>
+        {/*<Badge style={styles.badge} variant="outline">{venue.category}</Badge>*/}
+        </View>
+        <View style={[styles.venuePreviewDetail, { color: colors.textSecondary }]}>
+        <MapPin style={styles.venuePreviewIcon} />
+        <Text>{venue.address}</Text>
+        </View>
+        <View style={styles.venuePreviewFooter}>
+        <View style={styles.venuePreviewFooterItem}>
+            <Users style={styles.venuePreviewIcon} />
+            <Text>{venue.current_capacity || 'Not busy'}</Text>
+        </View>
+        <View style={styles.venuePreviewFooterItem}>
+            <Star style={[styles.venuePreviewIcon, { color: 'yellow' }]} />
+            <Text>{venue.rating?.toFixed(1) || 'New'}</Text>
+        </View>
+        </View>
+    </View>
+    )
+};
 
 /**
  * MapView Component:
- * - Displays venues on a simple SVG map.
+ * - Displays venues on a simple map.
  * - Allows selecting a venue, which triggers the onVenueSelect callback.
  */
 const MapView = ({ venues, onVenueSelect }) => {
   const [selectedVenue, setSelectedVenue] = useState(null);
+    const { colors } = useTheme();
 
   return (
-    <div className="relative w-full h-[calc(100vh-13rem)]">
-      <svg 
-        viewBox="0 0 800 600" 
-        className="w-full h-full bg-accent/10"
+    <View style={styles.mapContainer}>
+      <View // Simulate map with a View
+        style={styles.mapBackground}
       >
-        {/* Map Background */}
-        <rect width="800" height="600" fill="#f1f5f9" />
-        
-        {/* Grid Lines */}
-        {Array.from({ length: 20 }).map((_, i) => (
-          <React.Fragment key={i}>
-            <line 
-              x1={i * 40} y1="0" x2={i * 40} y2="600" 
-              stroke="#e2e8f0" strokeWidth="1" 
-            />
-            <line 
-              x1="0" y1={i * 40} x2="800" y2={i * 40} 
-              stroke="#e2e8f0" strokeWidth="1" 
-            />
-          </React.Fragment>
-        ))}
-
-        {/* Venue Markers */}
+        {/* Venue Markers (Simplified) */}
         {venues.map((venue, index) => (
-          <g 
+          <View
             key={venue.id}
-            transform={`translate(${100 + (index * 50) % 700}, ${150 + (index * 70) % 400})`}
-            className="cursor-pointer"
-            onClick={() => {
+            style={[
+              styles.mapMarker,
+              {
+                left: 100 + (index * 50) % (styles.mapBackground.width - 50), // Basic positioning within bounds
+                top: 50 + (index * 70) % (styles.mapBackground.height - 100),  // Basic positioning
+              },
+            ]}
+            onTouchEnd={() => { // Use onTouchEnd for touch events
               setSelectedVenue(venue);
               onVenueSelect(venue);
             }}
           >
-            <circle r="8" fill="#3b82f6" className="animate-pulse" />
-            <circle r="16" fill="#3b82f6" fillOpacity="0.2" />
-          </g>
+            <View style={[styles.mapMarkerInner, { backgroundColor: colors.primary }]} />
+            <View style={[styles.mapMarkerOuter, { backgroundColor: colors.primary }]} />
+          </View>
         ))}
 
-        {/* Current Location */}
-        <g transform="translate(400, 300)">
-          <circle r="8" fill="#10b981" />
-          <circle r="16" fill="#10b981" fillOpacity="0.2" />
-        </g>
-      </svg>
+        {/* Current Location (Simplified) */}
+        <View style={[styles.mapCurrentLocation, { backgroundColor: colors.green }]} />
+      </View>
 
       {/* Map Controls */}
-      <div className="absolute bottom-4 right-4 space-y-2">
-        <Button variant="secondary" size="icon" className="h-8 w-8">
-          <MapPin className="h-4 w-4" />
+      <View style={styles.mapControls}>
+        <Button variant="secondary" size="icon" style={styles.mapControlButton}>
+          <MapPin style={styles.mapControlIcon} />
         </Button>
-      </div>
+      </View>
 
       {/* Selected Venue Preview */}
       {selectedVenue && (
-        <Card className="absolute bottom-4 left-4 w-80">
-          <CardContent className="p-4">
+        /*<Card style={styles.selectedVenueCard}>
+          <CardContent style={styles.cardContent}>
             <VenuePreview venue={selectedVenue} />
           </CardContent>
-        </Card>
+        </Card>*/
+        <View>
+            <VenuePreview venue={selectedVenue} />
+        </View>
       )}
-    </div>
+    </View>
   );
 };
 
@@ -147,67 +128,77 @@ const MapView = ({ venues, onVenueSelect }) => {
  * - Displays a summary card for a venue.
  * - Clicking the card navigates to the venue's detail page.
  */
-const VenueCard = ({ venue }) => (
-  <Card 
-    className="cursor-pointer hover:bg-accent/50 transition-colors"
-    onClick={() => window.location.href = `/venues/${venue.id}`}
+const VenueCard = ({ venue, navigation }) => { // Receive navigation prop
+    const { colors } = useTheme();
+    return (
+        // TODO: replace with actual card
+  <View
+    style={styles.card}
+    onTouchEnd={() => navigation.navigate('VenueDetail', { venueId: venue.id })} // Use navigation.navigate and pass venueId
   >
-    <CardContent className="p-4">
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <h3 className="font-semibold">{venue.name}</h3>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4 mr-1" />
-            <span>{venue.distance ? `${venue.distance} away` : venue.address}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{venue.category}</Badge>
+    <View style={styles.cardContent}>
+      <View style={styles.cardRow}>
+        <View style={styles.cardColumn}>
+          <Text style={styles.venueName}>{venue.name}</Text>
+          <View style={styles.venueDetailRow}>
+            <MapPin style={[styles.cardIcon, { color: colors.textSecondary }]} />
+            <Text style={[styles.venueDetailText, { color: colors.textSecondary }]}>
+                {venue.distance ? `${venue.distance} away` : venue.address}
+            </Text>
+          </View>
+          <View style={styles.badgeContainer}>
+            {/*<Badge style={styles.badge} variant="secondary">{venue.category}</Badge>*/}
             {venue.current_vibe && (
-              <Badge variant="outline" className="capitalize">
+              /*<Badge style={[styles.badge, styles.trendingBadge]}>
                 {venue.current_vibe}
-              </Badge>
+              </Badge>*/
+              <Text>{venue.current_vibe}</Text>
             )}
             {venue.is_trending && (
-              <Badge variant="default" className="bg-orange-500">
+              /*<Badge style={[styles.badge, styles.trendingBadge]}>
                 Trending
-              </Badge>
+              </Badge>*/
+              <Text>Trending</Text>
             )}
-          </div>
-        </div>
-        <div className="text-right space-y-2">
-          <div className="flex items-center justify-end">
-            <Star className="h-4 w-4 text-yellow-500 mr-1" />
-            <span className="font-medium">{venue.rating?.toFixed(1) || 'New'}</span>
-          </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Activity className="h-4 w-4 mr-1" />
-            <span>{venue.check_ins_count || 0} here</span>
-          </div>
+          </View>
+        </View>
+        <View style={styles.cardColumn}>
+          <View style={styles.venueDetailRow}>
+            <Star style={[styles.cardIcon, { color: 'yellow' }]} />
+            <Text style={styles.venueDetailText}>{venue.rating?.toFixed(1) || 'New'}</Text>
+          </View>
+          <View style={styles.venueDetailRow}>
+            <Activity style={styles.cardIcon} />
+            <Text style={[styles.venueDetailText, { color: colors.textSecondary }]}>
+                {venue.check_ins_count || 0} here
+            </Text>
+          </View>
           {venue.opening_hours && (
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>{venue.opening_hours}</span>
-            </div>
+            <View style={styles.venueDetailRow}>
+              <Clock style={[styles.cardIcon, { color: colors.textSecondary }]} />
+              <Text style={[styles.venueDetailText, { color: colors.textSecondary }]}>{venue.opening_hours}</Text>
+            </View>
           )}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
+        </View>
+      </View>
+    </View>
+  </View>
+)};
 
 /**
  * FilterSheet Component:
  * - Provides a sheet (modal) for filtering venues based on category, sort order, and vibe.
  * - Allows resetting filters to default values.
  */
-const FilterSheet = ({ 
-  selectedCategory, 
+const FilterSheet = ({
+  selectedCategory,
   setSelectedCategory,
   sortBy,
   setSortBy,
   vibeFilter,
   setVibeFilter
 }) => {
+  const { colors } = useTheme();
   const categories = [
     { value: 'all', label: 'All Venues' },
     { value: 'bar', label: 'Bars' },
@@ -232,71 +223,70 @@ const FilterSheet = ({
   ];
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
+    /*<Sheet>
+      <SheetTrigger asChild>*/
+        <Button variant="outline" size="icon" style={styles.filterButton}>
+          <Filter style={styles.filterIcon} />
         </Button>
-      </SheetTrigger>
-      <SheetContent>
+      /*</SheetTrigger>
+      <SheetContent style={[styles.sheetContent, { backgroundColor: colors.background }]}>
         <SheetHeader>
-          <SheetTitle>Filter Venues</SheetTitle>
-          <SheetDescription>
+          <SheetTitle style={{ color: colors.text }}>Filter Venues</SheetTitle>
+          <SheetDescription style={{ color: colors.textSecondary }}>
             Adjust filters to find the perfect spot
           </SheetDescription>
         </SheetHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Category</label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Sort By</label>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Current Vibe</label>
-            <Select value={vibeFilter} onValueChange={setVibeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select vibe" />
-              </SelectTrigger>
-              <SelectContent>
-                {vibeOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <View style={styles.sheetSection}>
+          <Text style={[styles.sheetLabel, { color: colors.text }]}>Category</Text>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger style={[styles.selectTrigger, { borderColor: colors.border, backgroundColor: colors.card }]}>
+              <SelectValue placeholder="Select category" style={{ color: colors.text }}/>
+            </SelectTrigger>
+            <SelectContent style={{ backgroundColor: colors.card }}>
+              {categories.map(category => (
+                <SelectItem key={category.value} value={category.value} style={{ color: colors.text }}>
+                  {category.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </View>
+        <View style={styles.sheetSection}>
+          <Text style={[styles.sheetLabel, { color: colors.text }]}>Sort By</Text>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger style={[styles.selectTrigger, { borderColor: colors.border, backgroundColor: colors.card }]}>
+              <SelectValue placeholder="Sort by" style={{ color: colors.text }}/>
+            </SelectTrigger>
+            <SelectContent style={{ backgroundColor: colors.card }}>
+              {sortOptions.map(option => (
+                <SelectItem key={option.value} value={option.value} style={{ color: colors.text }}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </View>
+        <View style={styles.sheetSection}>
+          <Text style={[styles.sheetLabel, { color: colors.text }]}>Current Vibe</Text>
+          <Select value={vibeFilter} onValueChange={setVibeFilter}>
+            <SelectTrigger style={[styles.selectTrigger, { borderColor: colors.border, backgroundColor: colors.card }]}>
+              <SelectValue placeholder="Select vibe" style={{ color: colors.text }}/>
+            </SelectTrigger>
+            <SelectContent style={{ backgroundColor: colors.card }}>
+              {vibeOptions.map(option => (
+                <SelectItem key={option.value} value={option.value} style={{ color: colors.text }}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </View>
         <SheetFooter>
           <SheetClose asChild>
-            <Button 
-              variant="outline" 
-              onClick={() => {
+            <Button
+              variant="outline"
+              style={styles.resetButton}
+              onPress={() => {
                 setSelectedCategory('all');
                 setSortBy('popular');
                 setVibeFilter('all');
@@ -307,7 +297,7 @@ const FilterSheet = ({
           </SheetClose>
         </SheetFooter>
       </SheetContent>
-    </Sheet>
+    </Sheet>*/
   );
 };
 
@@ -319,6 +309,8 @@ const FilterSheet = ({
  * - Provides tabs to switch between list and map views.
  */
 const VenueListScreen = () => {
+    const { colors } = useTheme();
+    const navigation = useNavigation();
   const [venues, setVenues] = useState([]);
   const [filteredVenues, setFilteredVenues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -337,9 +329,9 @@ const VenueListScreen = () => {
     const fetchVenues = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/venues/');
+        const response = await api.get('/api/venues/'); // Use the 'api' instance
         if (!response.ok) throw new Error('Failed to fetch venues');
-        const data = await response.json();
+        const data = await response.data;
         setVenues(data);
         setFilteredVenues(data);
       } catch (err) {
@@ -395,115 +387,118 @@ const VenueListScreen = () => {
   // Conditional rendering based on loading state
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-blue-500" />
-      </div>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator testID="loading-indicator" size="large" color={colors.primary} />
+      </View>
     );
   }
 
   // Conditional rendering based on error state
   if (error) {
     return (
-      <div className="p-4">
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
+      <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+      </View>
     );
   }
 
   // Main return statement for rendering the VenueListScreen component
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <View style={styles.container}>
       {/* Header */}
-      <Card className="rounded-none border-b">
-        <CardHeader className="py-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">Find Venues</CardTitle>
-              {/* Tabs to switch between list and map views */}
-              <Tabs value={viewMode} onValueChange={setViewMode}>
-                <TabsList className="grid w-24 grid-cols-2">
-                  <TabsTrigger value="list">
-                    <List className="h-4 w-4" />
-                  </TabsTrigger>
-                  <TabsTrigger value="map">
-                    <Map className="h-4 w-4" />
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
+      {/*<Card style={styles.headerCard}>
+        <CardHeader style={styles.cardHeader}>*/}
+        <View>
+        <View>
+          {/*<CardTitle style={styles.cardTitle}>Find Venues</CardTitle>*/}
+          <Text>Find Venues</Text>
+            {/* Tabs to switch between list and map views */}
+            {/*<Tabs value={viewMode} onValueChange={setViewMode}>
+              <TabsList style={styles.tabsList}>
+                <TabsTrigger value="list" style={styles.tabsTrigger} testID="list-tab">
+                  <List style={styles.tabIcon} />
+                </TabsTrigger>
+                <TabsTrigger value="map" style={styles.tabsTrigger} testID="map-tab">
+                  <Map style={styles.tabIcon} />
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>*/}
+          </View>
             
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search venues..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-              {/* FilterSheet component for filtering options */}
-              <FilterSheet
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                vibeFilter={vibeFilter}
-                setVibeFilter={setVibeFilter}
+          <View style={styles.inputContainer}>
+            <View style={styles.searchContainer}>
+              <Search style={styles.searchIcon} />
+              <Input
+                placeholder="Search venues..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                style={styles.searchInput}
               />
-            </div>
+            </View>
+            {/* FilterSheet component for filtering options */}
+            <FilterSheet
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              vibeFilter={vibeFilter}
+              setVibeFilter={setVibeFilter}
+              testID="filter-button"
+            />
+          </View>
 
-            {/* Active Filters Display */}
-            {(selectedCategory !== 'all' || vibeFilter !== 'all') && (
-              <div className="flex flex-wrap gap-2">
-                {selectedCategory !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    {selectedCategory}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={() => setSelectedCategory('all')}
-                    >
-                      ×
-                    </Button>
-                  </Badge>
-                )}
-                {vibeFilter !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    {vibeFilter}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={() => setVibeFilter('all')}
-                    >
-                      ×
-                    </Button>
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
-        </CardHeader>
-      </Card>
+          {/* Active Filters Display */}
+          {(selectedCategory !== 'all' || vibeFilter !== 'all') && (
+            <View style={styles.activeFiltersContainer}>
+              {selectedCategory !== 'all' && (
+                /*<Badge style={styles.badge} variant="secondary">
+                  {selectedCategory}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    style={styles.filterCloseButton}
+                    onPress={() => setSelectedCategory('all')}
+                  >
+                    ×
+                  </Button>
+                </Badge>*/
+                <Text>{selectedCategory}</Text>
+              )}
+              {vibeFilter !== 'all' && (
+                /*<Badge style={styles.badge} variant="secondary">
+                  {vibeFilter}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    style={styles.filterCloseButton}
+                    onPress={() => setVibeFilter('all')}
+                  >
+                    ×
+                  </Button>
+                </Badge>*/
+                <Text>{vibeFilter}</Text>
+              )}
+            </View>
+          )}
+        {/*</CardHeader>
+      </Card>*/}
+        </View>
 
       {/* Conditional rendering for list or map view */}
       {viewMode === 'list' ? (
-        <ScrollArea className="flex-1">
-          <div className="container max-w-2xl mx-auto p-4">
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.contentContainer}>
             {filteredVenues.length === 0 ? (
-              <Card className="p-8 text-center">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">No venues found</h3>
-                  <p className="text-sm text-muted-foreground">
+              /*<Card style={styles.noVenuesCard}>
+                <View style={styles.noVenuesContent}>
+                  <Text style={styles.noVenuesTitle}>No venues found</Text>
+                  <Text style={styles.noVenuesText}>
                     Try adjusting your filters or search terms
-                  </p>
+                  </Text>
                   <Button
                     variant="outline"
-                    onClick={() => {
+                    style={styles.resetButton}
+                    onPress={() => {
                       setSearchQuery('');
                       setSelectedCategory('all');
                       setVibeFilter('all');
@@ -512,26 +507,305 @@ const VenueListScreen = () => {
                   >
                     Reset All Filters
                   </Button>
-                </div>
-              </Card>
+                </View>
+              </Card>*/
+              <View>
+                <Text>No venues found</Text>
+              </View>
             ) : (
-              <div className="space-y-4">
+              <View style={styles.venuesContainer}>
                 {filteredVenues.map(venue => (
-                  <VenueCard key={venue.id} venue={venue} />
+                  <VenueCard key={venue.id} venue={venue} navigation={navigation} />
                 ))}
-              </div>
+              </View>
             )}
-          </div>
-        </ScrollArea>
+          </View>
+        </ScrollView>
       ) : (
         <MapView 
           venues={filteredVenues} 
-          // Transition to VenueDetailScreen when a venue is selected on the map
-          onVenueSelect={(venue) => window.location.href = `/venues/${venue.id}`}
+          onVenueSelect={(venue) => navigation.navigate('VenueDetail', { venueId: venue.id })}
         />
       )}
-    </div>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        color: 'red',
+    },
+    headerCard: {
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    cardHeader: {
+        paddingVertical: 16,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    cardTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    tabsList: {
+        flexDirection: 'row',
+    },
+    tabsTrigger: {
+        flex: 1,
+        paddingVertical: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    tabIcon: {
+        width: 20,
+        height: 20,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    searchContainer: {
+        flex: 1,
+        position: 'relative',
+    },
+    searchIcon: {
+        position: 'absolute',
+        left: 8,
+        top: 12,
+        width: 20,
+        height: 20,
+    },
+    searchInput: {
+        paddingLeft: 36,
+        paddingVertical: 10,
+        borderRadius: 8,
+        borderWidth: 1,
+    },
+    filterButton: {
+        paddingHorizontal: 12,
+    },
+    filterIcon: {
+        width: 20,
+        height: 20,
+    },
+    activeFiltersContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginTop: 8,
+    },
+    badge: {
+        marginRight: 4,
+    },
+    filterCloseButton: {
+        padding: 0,
+        width: 16,
+        height: 16,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    contentContainer: {
+        padding: 16,
+    },
+    noVenuesCard: {
+        padding: 32,
+        alignItems: 'center',
+    },
+    noVenuesContent: {
+        alignItems: 'center',
+    },
+    noVenuesTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 8,
+    },
+    noVenuesText: {
+        fontSize: 14,
+        color: 'gray',
+        marginBottom: 16,
+    },
+    resetButton: {
+        marginTop: 16,
+    },
+    venuesContainer: {
+        gap: 16,
+    },
+    card: {
+        borderWidth: 1,
+        borderRadius: 8,
+        marginBottom: 16,
+    },
+    cardContent: {
+        padding: 16,
+    },
+    cardRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    cardColumn: {
+        flex: 1,
+    },
+    venueName: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    venueDetailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    cardIcon: {
+        width: 16,
+        height: 16,
+        marginRight: 4,
+    },
+    venueDetailText: {
+        fontSize: 14,
+    },
+    badgeContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 8,
+    },
+    trendingBadge: {
+        backgroundColor: 'orange',
+        color: 'white'
+    },
+    mapContainer: {
+        flex: 1,
+        position: 'relative'
+    },
+    mapBackground: {
+        flex: 1,
+        backgroundColor: 'lightgray',
+        width: '100%', // Add width
+        height: 300, // Add a specific height for the map
+    },
+    mapMarker: {
+        position: 'absolute',
+        width: 24,
+        height: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    mapMarkerInner: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        position: 'absolute',
+        top: 6,
+        left: 6,
+    },
+    mapMarkerOuter: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        opacity: 0.2
+    },
+    mapCurrentLocation: {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        marginLeft: -12,
+        marginTop: -12,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+    },
+    mapControls: {
+        position: 'absolute',
+        bottom: 16,
+        right: 16,
+    },
+    mapControlButton: {
+        width: 40,
+        height: 40,
+    },
+    mapControlIcon: {
+        width: 20,
+        height: 20,
+    },
+    selectedVenueCard: {
+        position: 'absolute',
+        bottom: 16,
+        left: 16,
+        width: '80%',
+        zIndex: 10
+    },
+    venuePreview: {
+        padding: 12,
+        borderWidth: 1,
+        borderRadius: 8
+    },
+    venuePreviewHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4
+    },
+    venuePreviewName: {
+        fontSize: 16,
+        fontWeight: '600'
+    },
+    venuePreviewDetail: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 4
+    },
+    venuePreviewIcon: {
+        width: 16,
+        height: 16,
+        marginRight: 4
+    },
+    venuePreviewFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+    },
+    venuePreviewFooterItem: {
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    sheetContent: {
+        padding: 16
+    },
+    sheetSection: {
+        marginBottom: 16
+    },
+    sheetLabel: {
+        marginBottom: 8,
+        fontWeight: '600'
+    },
+    selectTrigger: {
+        padding: 10,
+        borderRadius: 8,
+        borderWidth: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    resetButton: {
+        marginTop: 16
+    }
+});
 
 export default VenueListScreen;

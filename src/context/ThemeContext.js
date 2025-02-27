@@ -2,7 +2,21 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ThemeContext = createContext();
+const defaultTheme = {
+  colors: {
+    primary: '#3b82f6',
+    background: '#fff',
+    card: '#fff',
+    text: '#111827',
+    border: '#e5e7eb',
+    textSecondary: '#6b7280',
+  },
+  isDark: false,
+  theme: 'light',
+  setTheme: () => {},
+};
+
+const ThemeContext = createContext(defaultTheme);
 
 export const ThemeProvider = ({ children }) => {
   const systemColorScheme = useColorScheme();

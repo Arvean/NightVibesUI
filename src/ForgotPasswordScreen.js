@@ -1,239 +1,163 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { Text, TextInput, Button } from '@/components/ui';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Text, TextInput } from 'react-native';
+import { Button } from './components/ui/Button';
 import { Mail, AlertCircle, CheckCircle2 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from './axiosInstance';
 
-export default function ForgotPasswordScreen({ navigation }) {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
+const ForgotPasswordScreen = () => {
+    const [email, setEmail] = useState('');
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-  const validateEmail = (email) => {
-    return /\S+@\S+\.\S+/.test(email);
-  };
+    const handleResetPassword = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const response = await api.post('/api/forgot-password/', { email });
+            if (response.status === 200) {
+                setSuccess(true);
+            } else {
+                setError('Failed to send reset password email. Please try again.');
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to send reset password email. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const handleResetPassword = async () => {
-    if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
-    try {
-      await api.post('/password-reset/', { email });
-      setIsSuccess(true);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        'Failed to send reset email. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isSuccess) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <View style={styles.successContainer}>
-            <CheckCircle2 color="#22c55e" size={48} />
-            <Text style={styles.successTitle}>Check Your Email</Text>
-            <Text style={styles.successText}>
-              We've sent password reset instructions to:
-            </Text>
-            <Text style={styles.emailText}>{email}</Text>
-            <Text style={styles.instructionsText}>
-              If you don't see the email, check your spam folder.
-            </Text>
-          </View>
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={styles.innerContainer}
+            >
+                <View style={styles.formContainer}>
+                    <Text style={styles.title}>Forgot Password</Text>
 
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Back to Login"
-              onPress={() => navigation.navigate('Login')}
-              style={styles.button}
-            />
-            <Button
-              title="Resend Email"
-              variant="outline"
-              onPress={handleResetPassword}
-              style={[styles.button, styles.resendButton]}
-              disabled={isLoading}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
+                    {error ? (
+                        <View style={styles.errorContainer}>
+                            <AlertCircle size={20} color="#e74c3c" />
+                            <Text style={styles.errorText}>{error}</Text>
+                        </View>
+                    ) : null}
+
+                    {success ? (
+                        <View style={styles.successContainer}>
+                            <CheckCircle2 size={20} color="#2ecc71" />
+                            <Text style={styles.successText}>Password reset email sent! Please check your inbox.</Text>
+                        </View>
+                    ) : null}
+
+                    <View style={styles.inputContainer}>
+                        <Mail size={20} color="#3498db" style={styles.icon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                        />
+                    </View>
+
+                    <Button
+                        style={styles.button}
+                        title={loading ? "Sending..." : "Reset Password"}
+                        onPress={handleResetPassword}
+                        disabled={loading}
+                    />
+                </View>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
-  }
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Reset Password</Text>
-            <Text style={styles.subtitle}>
-              Enter your email address and we'll send you instructions to reset your
-              password.
-            </Text>
-          </View>
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <AlertCircle color="#ef4444" size={20} />
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Mail color="#6b7280" size={20} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, error && styles.inputError]}
-                placeholder="Email address"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  setError('');
-                }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
-
-            <Button
-              title={isLoading ? 'Sending...' : 'Send Reset Instructions'}
-              onPress={handleResetPassword}
-              disabled={isLoading}
-              style={styles.button}
-            />
-
-            <Button
-              title="Back to Login"
-              variant="ghost"
-              onPress={() => navigation.goBack()}
-              disabled={isLoading}
-            />
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  header: {
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    lineHeight: 24,
-  },
-  form: {
-    gap: 20,
-  },
-  inputContainer: {
-    gap: 4,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingLeft: 44,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: 16,
-    top: 14,
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  button: {
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resendButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#3b82f6',
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  errorText: {
-    color: '#ef4444',
-    flex: 1,
-  },
-  successContainer: {
-    alignItems: 'center',
-    gap: 16,
-    marginBottom: 40,
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  successText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  emailText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  instructionsText: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  buttonContainer: {
-    gap: 12,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    innerContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    formContainer: {
+        width: '100%',
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
+        color: '#3498db',
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        borderColor: '#3498db',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+    },
+    icon: {
+        marginRight: 10,
+    },
+    input: {
+        flex: 1,
+        height: 40,
+        color: '#333',
+    },
+    button: {
+        backgroundColor: '#3498db',
+        padding: 15,
+        borderRadius: 5,
+    },
+    errorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        padding: 10,
+        backgroundColor: '#f8d7da',
+        borderColor: '#f5c6cb',
+        borderWidth: 1,
+        borderRadius: 5,
+    },
+    errorText: {
+        marginLeft: 10,
+        color: '#721c24',
+    },
+    successContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        padding: 10,
+        backgroundColor: '#d4edda',
+        borderColor: '#c3e6cb',
+        borderWidth: 1,
+        borderRadius: 5,
+    },
+    successText: {
+        marginLeft: 10,
+        color: '#155724',
+    },
 });
+
+export default ForgotPasswordScreen;

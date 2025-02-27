@@ -1,114 +1,200 @@
 import React, { useState } from 'react';
-import { Star } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-
-const StarRating = ({ rating, onRatingChange }) => {
-  const [hoverRating, setHoverRating] = useState(0);
-
-  return (
-    <div className="flex justify-center space-x-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          className="focus:outline-none"
-          onMouseEnter={() => setHoverRating(star)}
-          onMouseLeave={() => setHoverRating(0)}
-          onClick={() => onRatingChange(star)}
-        >
-          <Star
-            className={`h-8 w-8 ${
-              star <= (hoverRating || rating)
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-300'
-            } transition-colors`}
-          />
-        </button>
-      ))}
-    </div>
-  );
-};
+import { View, Modal, TouchableOpacity, Text, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Star } from 'lucide-react-native';
+import { useTheme } from '../context/ThemeContext';
 
 const RatingDialog = ({ 
   venueName, 
   onSubmit, 
   isSubmitting, 
   error, 
-  initialRating,
-  initialComment,
+  initialRating = 5, 
+  initialComment = 'Great venue!',
   trigger 
 }) => {
-  const [rating, setRating] = useState(initialRating || 0);
-  const [comment, setComment] = useState(initialComment || '');
-  const [isOpen, setIsOpen] = useState(false);
+  const { colors } = useTheme();
+  const [isVisible, setIsVisible] = useState(false);
+  const [rating, setRating] = useState(initialRating);
+  const [comment, setComment] = useState(initialComment);
+
+  const handleOpen = () => setIsVisible(true);
+  const handleClose = () => setIsVisible(false);
+
+  const handleRating = (selectedRating) => {
+    setRating(selectedRating);
+  };
 
   const handleSubmit = async () => {
-    if (rating === 0) return;
-
-    const success = await onSubmit({ rating, comment });
+    const success = await onSubmit({ 
+      rating, 
+      comment 
+    });
     if (success) {
-      setIsOpen(false);
-      setRating(0);
-      setComment('');
+      handleClose();
     }
   };
 
+  const isSubmitDisabled = rating === 0 || isSubmitting;
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Rate {venueName}</DialogTitle>
-          <DialogDescription>
-            Share your experience at this venue
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6 py-4">
-          <StarRating rating={rating} onRatingChange={setRating} />
-          
-          <Textarea
-            placeholder="Write your review (optional)"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="min-h-[100px]"
-          />
-
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsOpen(false)}
+    <>
+      {/* Add testID to the submit button */}
+      <TouchableOpacity
+        style={[styles.button, styles.submitButton, isSubmitDisabled && styles.disabledButton]}
+        onPress={handleSubmit}
+        disabled={isSubmitDisabled}
+        testID="submit-rating-button"
+      >
+        {isSubmitting ? (
+          <ActivityIndicator size="small" color="white" />
+        ) : (
+          <Text style={styles.buttonText}>Submit</Text>
+        )}
+      </TouchableOpacity>
+      <Modal
+        visible={isVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleClose}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Rate {venueName}</Text>
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => handleRating(star)}
+                  disabled={isSubmitting}
+                  data-testid={`star-${star}`}
+                  accessibilityLabel={`Rate ${star} stars`}
+                >
+                  <Star
+                    size={40}
+                    fill={star <= rating ? "#FFD700" : "transparent"}
+                    color="#FFD700"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Add a comment (optional)"
+              value={comment}
+              onChangeText={setComment}
+              multiline
+              numberOfLines={3}
               disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={rating === 0 || isSubmitting}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Rating'}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+            />
+            
+            {error && (
+              <Text style={styles.errorText}>{error}</Text>
+            )}
+            
+            <View style={styles.buttonsContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={handleClose}
+                disabled={isSubmitting}
+                data-testid="close-button"
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.submitButton, isSubmitDisabled && styles.disabledButton]}
+                onPress={handleSubmit}
+                disabled={isSubmitDisabled}
+                data-testid="submit-rating-button"
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={styles.buttonText}>Submit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
+
+const styles = StyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#000',
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    width: '100%',
+    marginBottom: 20,
+    textAlignVertical: 'top',
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 20,
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  button: {
+    borderRadius: 10,
+    padding: 10,
+    elevation: 2,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+    marginRight: 10,
+  },
+  submitButton: {
+    backgroundColor: '#3b82f6',
+    marginLeft: 10,
+  },
+  disabledButton: {
+    backgroundColor: '#a0aec0',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
 
 export default RatingDialog;

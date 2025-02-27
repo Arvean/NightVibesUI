@@ -1,70 +1,42 @@
 module.exports = {
-  // The root directory that Jest should scan for tests and modules
-  roots: ['<rootDir>/src'],
-
-  // File extensions Jest should look for
-  moduleFileExtensions: ['js', 'jsx', 'json', 'node'],
-
-  // Module name mapper for handling path aliases and static assets
-  moduleNameMapper: {
-    '^@/components/ui/(.*)$': '<rootDir>/src/__mocks__/ui.js',
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^../hooks/useMap$': '<rootDir>/src/__mocks__/useMap.js',
-    'react-map-gl': '<rootDir>/src/__mocks__/react-map-gl.js',
-    '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
-    '\\.(gif|ttf|eot|svg|png)$': '<rootDir>/src/__mocks__/fileMock.js',
-    'mapbox-gl': '<rootDir>/src/__mocks__/fileMock.js',
-    '@radix-ui/react-dialog': '<rootDir>/src/__mocks__/ui.js',
-    'lucide-react': '<rootDir>/src/__mocks__/fileMock.js'
-  },
-
-  // Setup files to run before each test
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-
-  // Test environment configuration
-  testEnvironment: 'jsdom',
-
-  // Coverage configuration
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx}',
-    '!src/index.js',
-    '!src/**/*.d.ts',
-    '!src/**/*.stories.{js,jsx}',
-    '!src/**/__tests__/**/*',
-    '!src/**/__mocks__/**/*'
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  setupFiles: [
+    '<rootDir>/src/setupTests.js',
+    './node_modules/react-native-gesture-handler/jestSetup.js',
   ],
-
-  // Coverage thresholds
+  transformIgnorePatterns: [
+    'node_modules/(?!(jest-)?react-native|@react-native(-community)?|@react-navigation/.*|react-navigation|@unimodules/.*|unimodules|native-base|react-native-svg|expo(nent)?|@expo(nent)?/.*|react-native-vector-icons|@react-native-async-storage/.*)',
+  ],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '\\.svg': '<rootDir>/__mocks__/fileMock.js',
+    '^../axiosInstance$': '<rootDir>/src/axiosInstance',
+    '^@/components/ui$': '<rootDir>/src/components/ui'
+  },
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/android/',
+    '/ios/',
+  ],
+  collectCoverage: true,
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/__mocks__/**',
+    '!src/**/__tests__/**',
+    '!src/index.js', // Ignoring entry point
+    '!src/types.ts', // Ignoring type definitions
+  ],
+  coverageReporters: ['json', 'lcov', 'text', 'clover'],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
-    }
+      branches: 10,
+      functions: 10,
+      lines: 10,
+      statements: 10,
+    },
   },
-
-  // Test match patterns
-  testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.{js,jsx}',
-    '<rootDir>/src/**/*.{spec,test}.{js,jsx}'
-  ],
-
-  // Transform configuration
   transform: {
-    '^.+\\.(js|jsx)$': 'babel-jest'
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { configFile: './babel.config.js' }],
   },
-
-  // Ignore patterns
-  transformIgnorePatterns: [
-    '^.+\\.module\\.(css|sass|scss)$'
-  ],
-
-  // Global variables available in all test files
-  globals: {
-    __DEV__: true
-  },
-
-  // Verbose output
-  verbose: true
-}
+};

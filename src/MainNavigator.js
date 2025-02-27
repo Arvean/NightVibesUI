@@ -2,7 +2,7 @@ import React from 'react';
 // Importing navigation components from 'react-navigation'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-// Importing icons from 'lucide-react-native'
+// Importing icons from 'lucide-react'
 import {
   Home,
   Map,
@@ -11,7 +11,7 @@ import {
   User,
   Activity,
   MessageSquare,
-} from 'lucide-react-native';
+} from 'lucide-react';
 
 // Importing screens
 import HomeScreen from './HomeScreen';
@@ -26,6 +26,8 @@ import NotificationScreen from './NotificationScreen';
 import NotificationPreferencesScreen from './NotificationPreferencesScreen';
 import ProfileScreen from './ProfileScreen';
 import MeetupListScreen from './MeetupListScreen';
+import CheckInScreen from './CheckInScreen';
+import EditProfileScreen from './EditProfileScreen';
 
 // Creating tab and stack navigators
 const Tab = createBottomTabNavigator();
@@ -132,6 +134,31 @@ const NotificationStack = () => (
   </Stack.Navigator>
 );
 
+const CheckInStack = () => (
+  <Stack.Navigator screenOptions={screenOptions}>
+    <Stack.Screen
+      name="CheckIn"
+      component={CheckInScreen}
+      options={{ title: 'Check In' }}
+    />
+  </Stack.Navigator>
+);
+
+const ProfileStack = () => (
+    <Stack.Navigator screenOptions={screenOptions}>
+        <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ title: 'Profile' }}
+        />
+        <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ title: 'Edit Profile' }}
+        />
+    </Stack.Navigator>
+);
+
 /**
  * MainNavigator Component:
  * - Tab navigator for the main app screens.
@@ -194,7 +221,7 @@ export default function MainNavigator() {
       {/* Profile Screen */}
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileStack}
         options={{
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}

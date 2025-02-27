@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // Use localhost for iOS simulator and 10.0.2.2 for Android emulator
-const DEV_API_URL = Platform.select({
+const DEV_API_URL = process.env.NODE_ENV === 'test' ? 'http://localhost:8000' : Platform.select({
   ios: 'http://localhost:8000',
   android: 'http://10.0.2.2:8000',
 });
@@ -155,9 +155,9 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { config } = error;
-    
+
     // Only retry GET requests
-    if (!config || !config.method === 'get' || config._retry) {
+    if (!config || config.method !== 'get' || config._retry) {
       return Promise.reject(error);
     }
 
@@ -168,10 +168,10 @@ api.interceptors.response.use(
     if (config._retry <= maxRetries) {
       // Exponential backoff delay
       const delayMs = Math.min(1000 * (2 ** (config._retry - 1)), 10000);
-      
+
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delayMs));
-      
+
       // Retry the request
       return api(config);
     }

@@ -1,407 +1,236 @@
 import React, { useContext, useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { AuthContext } from '../AuthContext';
-import { Text, TextInput, Button, Checkbox } from '@/components/ui';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Text, TextInput } from 'react-native';
+import { AuthContext } from './AuthContext';
+import { Button } from './components/ui/Button';
+import Checkbox from '@react-native-community/checkbox';
 import { Lock, Mail, User, AlertCircle, CheckCircle2 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function RegisterScreen({ navigation }) {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [serverErrors, setServerErrors] = useState({});
-  const { register, isLoading, error: authError } = useContext(AuthContext);
+const RegisterScreen = () => {
+    const { register } = useContext(AuthContext);
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [agreeToTerms, setAgreeToTerms] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-  const validatePassword = (pass) => {
-    const requirements = {
-      length: pass.length >= 8,
-      uppercase: /[A-Z]/.test(pass),
-      lowercase: /[a-z]/.test(pass),
-      number: /[0-9]/.test(pass),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(pass),
-    };
-
-    return {
-      isValid: Object.values(requirements).every(Boolean),
-      requirements,
-    };
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    setServerErrors({});
-    
-    if (!username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    }
-    
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-    
-    const passwordValidation = validatePassword(password);
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (!passwordValidation.isValid) {
-      newErrors.password = 'Password must meet all requirements';
-      newErrors.passwordRequirements = passwordValidation.requirements;
-    }
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (!acceptTerms) {
-      newErrors.terms = 'You must accept the terms and conditions';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleRegister = async () => {
-    if (validateForm()) {
-      try {
-        await register(username, email, password);
-        // Registration successful - navigation will be handled by AuthContext
-      } catch (error) {
-        const serverErrors = {};
-        if (error.response?.data) {
-          // Handle Django REST framework error format
-          Object.entries(error.response.data).forEach(([key, value]) => {
-            serverErrors[key] = Array.isArray(value) ? value[0] : value;
-          });
-        } else {
-          serverErrors.general = 'Registration failed. Please try again.';
+    const handleRegister = async () => {
+        if (password !== confirmPassword) {
+            setError('Passwords do not match.');
+            return;
         }
-        setServerErrors(serverErrors);
-      }
-    }
-  };
+        if (!agreeToTerms) {
+            setError('You must agree to the terms and conditions.');
+            return;
+        }
 
-  const renderPasswordRequirements = () => {
-    if (!password || !errors.passwordRequirements) return null;
-
-    const requirements = [
-      { key: 'length', label: 'At least 8 characters' },
-      { key: 'uppercase', label: 'One uppercase letter' },
-      { key: 'lowercase', label: 'One lowercase letter' },
-      { key: 'number', label: 'One number' },
-      { key: 'special', label: 'One special character' },
-    ];
+        setLoading(true);
+        setError('');
+        try {
+            await register(username, email, password);
+            setSuccess(true);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Registration failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-      <View style={styles.requirementsContainer}>
-        <Text style={styles.requirementsTitle}>Password requirements:</Text>
-        {requirements.map(({ key, label }) => (
-          <View key={key} style={styles.requirementRow}>
-            <CheckCircle2
-              size={16}
-              color={errors.passwordRequirements[key] ? '#22c55e' : '#6b7280'}
-            />
-            <Text
-              style={[
-                styles.requirementText,
-                errors.passwordRequirements[key] && styles.requirementMet,
-              ]}
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={styles.innerContainer}
             >
-              {label}
-            </Text>
-          </View>
-        ))}
-      </View>
+                <View style={styles.formContainer}>
+                    <Text style={styles.title}>Create an Account</Text>
+
+                    {error ? (
+                        <View style={styles.errorContainer}>
+                            <AlertCircle size={20} color="#e74c3c" />
+                            <Text style={styles.errorText}>{error}</Text>
+                        </View>
+                    ) : null}
+
+                    {success ? (
+                        <View style={styles.successContainer}>
+                            <CheckCircle2 size={20} color="#2ecc71" />
+                            <Text style={styles.successText}>Registration successful! Please log in.</Text>
+                        </View>
+                    ) : null}
+
+                    <View style={styles.inputContainer}>
+                        <User size={20} color="#3498db" style={styles.icon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Username"
+                            value={username}
+                            onChangeText={setUsername}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Mail size={20} color="#3498db" style={styles.icon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Lock size={20} color="#3498db" style={styles.icon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Password"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            autoCapitalize="none"
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Lock size={20} color="#3498db" style={styles.icon} />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Confirm Password"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry
+                            autoCapitalize="none"
+                        />
+                    </View>
+
+                    <View style={styles.termsContainer}>
+                        <Checkbox
+                            value={agreeToTerms}
+                            onValueChange={setAgreeToTerms}
+                        />
+                        <Text style={styles.termsText}>
+                            I agree to the{' '}
+                            <Text style={styles.termsLink} onPress={() => { /* Navigate to TermsScreen */ }}>
+                                Terms and Conditions
+                            </Text>
+                        </Text>
+                    </View>
+
+                    <Button
+                        style={styles.button}
+                        title={loading ? "Registering..." : "Register"}
+                        onPress={handleRegister}
+                        disabled={loading}
+                    />
+                </View>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join the nightlife community</Text>
-          </View>
-
-          {(authError || serverErrors.general) && (
-            <View style={styles.errorContainer}>
-              <AlertCircle color="#ef4444" size={20} />
-              <Text style={styles.errorText}>
-                {authError || serverErrors.general}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <User color="#6b7280" size={20} style={styles.inputIcon} />
-              <TextInput
-                style={[
-                  styles.input,
-                  (errors.username || serverErrors.username) && styles.inputError,
-                ]}
-                placeholder="Username"
-                value={username}
-                onChangeText={(text) => {
-                  setUsername(text);
-                  setErrors((prev) => ({ ...prev, username: null }));
-                  setServerErrors((prev) => ({ ...prev, username: null }));
-                }}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {(errors.username || serverErrors.username) && (
-                <Text style={styles.errorMessage}>
-                  {errors.username || serverErrors.username}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Mail color="#6b7280" size={20} style={styles.inputIcon} />
-              <TextInput
-                style={[
-                  styles.input,
-                  (errors.email || serverErrors.email) && styles.inputError,
-                ]}
-                placeholder="Email"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  setErrors((prev) => ({ ...prev, email: null }));
-                  setServerErrors((prev) => ({ ...prev, email: null }));
-                }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {(errors.email || serverErrors.email) && (
-                <Text style={styles.errorMessage}>
-                  {errors.email || serverErrors.email}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Lock color="#6b7280" size={20} style={styles.inputIcon} />
-              <TextInput
-                style={[
-                  styles.input,
-                  (errors.password || serverErrors.password) && styles.inputError,
-                ]}
-                placeholder="Password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  setErrors((prev) => ({ ...prev, password: null }));
-                  setServerErrors((prev) => ({ ...prev, password: null }));
-                }}
-                secureTextEntry
-              />
-              {renderPasswordRequirements()}
-              {(errors.password || serverErrors.password) && (
-                <Text style={styles.errorMessage}>
-                  {errors.password || serverErrors.password}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Lock color="#6b7280" size={20} style={styles.inputIcon} />
-              <TextInput
-                style={[
-                  styles.input,
-                  errors.confirmPassword && styles.inputError,
-                ]}
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  setErrors((prev) => ({ ...prev, confirmPassword: null }));
-                }}
-                secureTextEntry
-              />
-              {errors.confirmPassword && (
-                <Text style={styles.errorMessage}>{errors.confirmPassword}</Text>
-              )}
-            </View>
-
-            <View style={styles.termsContainer}>
-              <Checkbox
-                checked={acceptTerms}
-                onCheckedChange={setAcceptTerms}
-                aria-label="Accept terms and conditions"
-              />
-              <Text style={styles.termsText}>
-                I accept the{' '}
-                <Text
-                  style={styles.termsLink}
-                  onPress={() => navigation.navigate('Terms')}
-                >
-                  Terms and Conditions
-                </Text>
-              </Text>
-            </View>
-            {errors.terms && (
-              <Text style={styles.errorMessage}>{errors.terms}</Text>
-            )}
-
-            <Button
-              title={isLoading ? 'Creating Account...' : 'Create Account'}
-              onPress={handleRegister}
-              disabled={isLoading}
-              style={styles.button}
-            />
-
-            <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already have an account?</Text>
-              <Button
-                title="Sign In"
-                variant="ghost"
-                onPress={() => navigation.goBack()}
-                disabled={isLoading}
-              />
-            </View>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  header: {
-    marginBottom: 40,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  form: {
-    gap: 20,
-  },
-  inputContainer: {
-    gap: 4,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingLeft: 44,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: 16,
-    top: 14,
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  errorMessage: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  button: {
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  errorText: {
-    color: '#ef4444',
-    flex: 1,
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  loginText: {
-    color: '#6b7280',
-  },
-  requirementsContainer: {
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-  },
-  requirementsTitle: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  requirementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  requirementText: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  requirementMet: {
-    color: '#22c55e',
-  },
-  termsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  termsText: {
-    fontSize: 14,
-    color: '#374151',
-    flex: 1,
-  },
-  termsLink: {
-    color: '#3b82f6',
-    textDecorationLine: 'underline',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    innerContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    formContainer: {
+        width: '100%',
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
+        color: '#3498db',
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        borderColor: '#3498db',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+    },
+    icon: {
+        marginRight: 10,
+    },
+    input: {
+        flex: 1,
+        height: 40,
+        color: '#333',
+    },
+    termsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    termsText: {
+        marginLeft: 10,
+        color: '#333',
+    },
+    termsLink: {
+        color: '#3498db',
+        fontWeight: 'bold',
+    },
+    button: {
+        backgroundColor: '#3498db',
+        padding: 15,
+        borderRadius: 5,
+    },
+    errorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        padding: 10,
+        backgroundColor: '#f8d7da',
+        borderColor: '#f5c6cb',
+        borderWidth: 1,
+        borderRadius: 5,
+    },
+    errorText: {
+        marginLeft: 10,
+        color: '#721c24',
+    },
+    successContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+        padding: 10,
+        backgroundColor: '#d4edda',
+        borderColor: '#c3e6cb',
+        borderWidth: 1,
+        borderRadius: 5,
+    },
+    successText: {
+        marginLeft: 10,
+        color: '#155724',
+    },
 });
+
+export default RegisterScreen;

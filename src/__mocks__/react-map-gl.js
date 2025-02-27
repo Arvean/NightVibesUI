@@ -1,25 +1,12 @@
 import React from 'react';
 
-export const Map = ({ children, ...props }) => (
-  <div data-testid="map-container" {...props}>
-    {children}
-  </div>
+const Map = ({ children }) => <div data-testid="map-container">{children}</div>;
+const Marker = ({ children, latitude, longitude }) => (
+  <div data-testid={`marker-${latitude}-${longitude}`}>{children}</div>
 );
+const Popup = () => <div />;
+const NavigationControl = () => <div />;
+const GeolocateControl = () => <div />;
 
-export const Marker = ({ children, ...props }) => (
-  <div {...props}>
-    {children}
-  </div>
-);
-
-export const Popup = ({ children, ...props }) => (
-  <div {...props}>
-    {children}
-  </div>
-);
-
-export default {
-  Map,
-  Marker,
-  Popup
-};
+export { Marker, Popup, NavigationControl, GeolocateControl };
+export default Map;

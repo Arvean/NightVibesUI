@@ -1,0 +1,56 @@
+
+> nightvibesui@1.0.0 test
+> jest
+
+-----------------------------------|---------|----------|---------|---------|-------------------------------------
+File                               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                   
+-----------------------------------|---------|----------|---------|---------|-------------------------------------
+All files                          |    9.41 |     1.49 |     4.4 |     9.6 |                                     
+ src                               |    3.58 |        0 |       0 |    3.69 |                                     
+  AuthContext.js                   |    2.15 |        0 |       0 |    2.17 | 9-209                               
+  AuthNavigator.js                 |   33.33 |        0 |       0 |   33.33 | 37-43                               
+  CheckInScreen.js                 |    4.87 |        0 |       0 |       5 | 9-95                                
+  EditProfileScreen.js             |       5 |        0 |       0 |    5.12 | 9-81                                
+  ForgotPasswordScreen.js          |   11.76 |        0 |       0 |   11.76 | 9-31                                
+  FriendActivityScreen.js          |   13.33 |        0 |       0 |   14.28 | 9-50                                
+  FriendDiscoveryScreen.js         |       0 |        0 |       0 |       0 | 11-134                              
+  FriendListScreen.js              |       0 |        0 |       0 |       0 | 22-196                              
+  FriendRequestsScreen.js          |       0 |        0 |       0 |       0 | 11-203                              
+  HomeScreen.js                    |       0 |        0 |       0 |       0 | 24-309                              
+  LoadingScreen.js                 |       0 |      100 |       0 |       0 | 8-28                                
+  LoginScreen.js                   |    3.84 |        0 |       0 |    4.16 | 21-143                              
+  MainNavigator.js                 |   38.09 |        0 |       0 |   38.09 | 59,99-110,121,138,148-226           
+  MapScreen.js                     |    1.28 |        0 |       0 |    1.33 | 19-489                              
+  MeetupListScreen.js              |       0 |        0 |       0 |       0 | 20-231                              
+  NotificationPreferencesScreen.js |       0 |        0 |       0 |       0 | 10-159                              
+  NotificationScreen.js            |       0 |        0 |       0 |       0 | 30-286                              
+  ProfileScreen.js                 |    6.66 |        0 |       0 |    6.89 | 9-69                                
+  RegisterScreen.js                |    7.69 |        0 |       0 |    7.69 | 10-42                               
+  TermsScreen.js                   |       0 |      100 |       0 |       0 | 6-79                                
+  VenueDetailScreen.js             |    2.56 |        0 |       0 |    2.63 | 21-347                              
+  VenueListScreen.js               |    7.79 |        0 |       0 |    8.57 | 40-41,71-92,132-137,201-225,312-527 
+  axiosInstance.js                 |       0 |        0 |       0 |       0 | 6-193                               
+  constants.js                     |       0 |        0 |       0 |       0 |                                     
+  setupTests.js                    |       0 |        0 |       0 |       0 | 4-48                                
+ src/api                           |   15.25 |     4.76 |       0 |   15.51 |                                     
+  axiosInstance.js                 |   15.25 |     4.76 |       0 |   15.51 | 28-61,69-145,155-179,185-188,193    
+ src/components                    |   15.11 |        0 |       0 |   15.66 |                                     
+  Animated.js                      |   17.39 |        0 |       0 |   18.18 | 5-17,32-64,86-108,124-127           
+  ErrorBoundary.js                 |       0 |        0 |       0 |       0 | 9-96                                
+  MeetupPingDialog.js              |   14.28 |        0 |       0 |   15.38 | 7-24                                
+  RatingDialog.js                  |   10.52 |        0 |       0 |   11.11 | 8-43                                
+  Skeleton.js                      |   35.71 |      100 |       0 |   35.71 | 6-31,48,67,87                       
+ src/components/ui                 |   66.66 |      100 |       0 |   66.66 |                                     
+  Button.js                        |   66.66 |      100 |       0 |   66.66 | 5                                   
+ src/context                       |      10 |        0 |       0 |      10 |                                     
+  ThemeContext.js                  |      10 |        0 |       0 |      10 | 8-86,101-105                        
+ src/hooks                         |   23.03 |     17.5 |   21.25 |   23.61 |                                     
+  useFriendActivity.js             |       0 |        0 |       0 |       0 | 5-74                                
+  useFriendDiscovery.js            |       0 |        0 |       0 |       0 | 4-76                                
+  useFriendRequests.js             |       0 |      100 |       0 |       0 | 4-55                                
+  useFriends.js                    |       0 |        0 |       0 |       0 | 4-54                                
+  useMapData.js                    |   81.48 |    31.81 |   78.57 |   82.35 | 32-36,54-55,100-103,121             
+  useMeetupPings.js                |       0 |        0 |       0 |       0 | 5-78                                
+  useNotifications.js              |       0 |        0 |       0 |       0 | 4-87                                
+  useVenueRating.js                |   89.74 |      100 |     100 |   89.74 | 69-70,89-90                         
+-----------------------------------|---------|----------|---------|---------|-------------------------------------

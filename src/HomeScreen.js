@@ -1,13 +1,19 @@
-import React, { useState, useEffect } from 'react';
-// Importing necessary icons from the 'lucide-react' library
-import { Activity, MapPin, Users, TrendingUp, Loader } from 'lucide-react';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { Alert, Linking, View, StyleSheet, ActivityIndicator } from 'react-native';
+// Importing necessary icons from the 'lucide-react-native' library
+import { Activity, MapPin, Users, TrendingUp, Loader } from 'lucide-react-native';
 // Importing UI components from the '@/components/ui/' directory
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Text, Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollView } from 'react-native'; // Use ScrollView from react-native
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import Geolocation from '@react-native-community/geolocation';
+import { AuthContext } from './AuthContext';
+import { useTheme } from './context/ThemeContext'; // Import useTheme
+import api from './axiosInstance';
 
 /**
  * HomeScreen Component:
@@ -16,6 +22,9 @@ import { Badge } from '@/components/ui/badge';
  * - Allows users to navigate to venue details or check-in pages.
  */
 const HomeScreen = () => {
+  const { user } = useContext(AuthContext);
+  const navigation = useNavigation();
+  const { colors } = useTheme(); // Use the useTheme hook
   // State to store trending venues
   const [trendingVenues, setTrendingVenues] = useState([]);
   // State to store friend activity
@@ -26,6 +35,68 @@ const HomeScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   // State to manage error messages
   const [error, setError] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
+
+  // useEffect hook to check for location permissions
+  useEffect(() => {
+    checkLocationPermission();
+  }, []);
+
+  // Function to check for location permissions
+  const checkLocationPermission = async () => {
+    const permissionStatus = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+
+    if (permissionStatus === RESULTS.GRANTED) {
+      setLocationPermissionGranted(true);
+    } else {
+      requestLocationPermission();
+    }
+  };
+
+  // Function to request location permissions
+  const requestLocationPermission = async () => {
+    try {
+      const granted = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+      if (granted === RESULTS.GRANTED) {
+        setLocationPermissionGranted(true);
+        getCurrentLocation();
+      } else {
+        Alert.alert(
+          "Location Permission Required",
+          "Please enable location permissions in settings to use this feature.",
+          [
+            {
+              text: "Open Settings",
+              onPress: () => Linking.openSettings(),
+            },
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+          ]
+        );
+        console.log('Location permission denied');
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  // Function to get the current user location
+  const getCurrentLocation = () => {
+    Geolocation.getCurrentPosition(
+      position => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ latitude, longitude });
+      },
+      error => {
+        console.log(error);
+        Alert.alert("Error", "Failed to get current location.");
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+    );
+  };
 
   // useEffect hook to fetch home data when the component mounts
   useEffect(() => {
@@ -33,172 +104,321 @@ const HomeScreen = () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Fetch trending venues, friend activity, and nearby venues from APIs
-        const [venuesRes, activityRes, nearbyRes] = await Promise.all([
-          fetch('/api/venues?sort=trending'),
-          fetch('/api/checkins?friends=true'),
-          fetch('/api/venues/nearby')
-        ]);
 
-        if (!venuesRes.ok || !activityRes.ok || !nearbyRes.ok) {
+        // Fetch trending venues
+        const venuesRes = await api.get('/api/venues/?sort_by=popularity');
+        // Fetch friend activity - get all checkins and filter
+        const activityRes = await api.get('/api/checkins/');
+
+        if (venuesRes.status !== 200 || activityRes.status !== 200) {
           throw new Error('Failed to fetch data');
         }
 
-        const [venues, activity, nearby] = await Promise.all([
-          venuesRes.json(),
-          activityRes.json(),
-          nearbyRes.json()
-        ]);
+        const venues = venuesRes.data;
+        // Filter friend activity
+        const activity = activityRes.data.filter(
+          (checkin) =>
+            checkin.visibility === 'public' ||
+            (user &&
+              checkin.user.id !== user.id &&
+              checkin.user.friends.includes(user.id))
+        );
+
+        let nearby = [];
+        if (userLocation) {
+          const nearbyRes = await api.get(
+            `/api/venues/?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=5000`
+          ); // Added a default radius
+          if (nearbyRes.status === 200) {
+            nearby = nearbyRes.data;
+          }
+        }
 
         setTrendingVenues(venues.slice(0, 5));
         setFriendActivity(activity.slice(0, 10));
         setNearbyVenues(nearby.slice(0, 5));
       } catch (err) {
+        console.error(err);
         setError('Failed to load data. Please try again later.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchHomeData();
-  }, []);
+    if (locationPermissionGranted) {
+      fetchHomeData();
+    }
+  }, [locationPermissionGranted, userLocation]);
 
   // Conditional rendering based on loading state
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-blue-500" />
-      </div>
-    );
-  }
+    if (isLoading) {
+        return (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        );
+      }
 
-  // Conditional rendering based on error state
-  if (error) {
-    return (
-      <div className="p-4">
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+      if (error) {
+        return (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        );
+      }
 
   // Main return statement for rendering the HomeScreen component
   return (
-    <div className="flex flex-col min-h-screen">
+    <View style={styles.container}>
       {/* Header */}
-      <Card className="rounded-none border-b">
-        <CardHeader className="py-4">
-          <CardTitle className="text-2xl font-bold">NightVibes</CardTitle>
+      <Card style={styles.headerCard}>
+        <CardHeader style={styles.cardHeader}>
+          <CardTitle style={styles.cardTitle}>NightVibes</CardTitle>
         </CardHeader>
       </Card>
 
-      <ScrollArea className="flex-1 px-4 py-6">
-        <div className="space-y-6 pb-6">
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
           {/* Trending Venues */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xl font-semibold">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                  Trending Tonight
-                </div>
+          <Card style={styles.card}>
+            <CardHeader style={styles.cardHeader}>
+              <CardTitle style={styles.cardTitle}>
+                <View style={styles.iconContainer}>
+                  <TrendingUp style={styles.icon} color={colors.primary} />
+                  <Text style={styles.sectionTitle}>Trending Tonight</Text>
+                </View>
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent style={styles.cardContent}>
               {trendingVenues.map((venue) => (
-                <div 
+                <View
                   key={venue.id}
-                  className="flex items-center justify-between"
+                  style={styles.venueItem}
                   // Transition to VenueDetailScreen when a venue is clicked
-                  onClick={() => window.location.href = `/venues/${venue.id}`}
+                  onPress={() => navigation.navigate('VenueDetail', { venue })} // Corrected navigation
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="space-y-1">
-                    <p className="font-medium leading-none">{venue.name}</p>
-                    <p className="text-sm text-muted-foreground">{venue.category}</p>
-                  </div>
-                  <Badge variant="secondary">{venue.current_vibe || 'Lively'}</Badge>
-                </div>
+                  <View style={styles.venueDetails}>
+                    <Text style={styles.venueName}>{venue.name}</Text>
+                    <Text style={styles.venueCategory}>{venue.category}</Text>
+                  </View>
+                  <Badge style={styles.badge} variant="secondary">
+                    {venue.current_vibe || 'Lively'}
+                  </Badge>
+                </View>
               ))}
             </CardContent>
           </Card>
 
           {/* Friend Activity */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xl font-semibold">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-green-500" />
-                  Friend Activity
-                </div>
+          <Card style={styles.card}>
+            <CardHeader style={styles.cardHeader}>
+              <CardTitle style={styles.cardTitle}>
+                <View style={styles.iconContainer}>
+                  <Activity style={styles.icon} color={colors.green} />
+                  <Text style={styles.sectionTitle}>Friend Activity</Text>
+                </View>
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent style={styles.cardContent}>
               {friendActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-4">
-                  <div className="rounded-full bg-secondary p-2">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm">
-                      <span className="font-medium">{activity.user.username}</span>
+                <View key={activity.id} style={styles.activityItem}>
+                  <View style={styles.activityIconContainer}>
+                    <Users style={styles.activityIcon} />
+                  </View>
+                  <View style={styles.activityDetails}>
+                    <Text style={styles.activityText}>
+                      <Text style={styles.activityUser}>
+                        {activity.user.username}
+                      </Text>
                       {' checked in at '}
-                      <span className="font-medium">{activity.venue.name}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
+                      <Text style={styles.activityVenue}>{activity.venue.name}</Text>
+                    </Text>
+                    <Text style={styles.activityTime}>
                       {new Date(activity.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
+                    </Text>
+                  </View>
+                </View>
               ))}
             </CardContent>
           </Card>
 
           {/* Nearby Venues */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xl font-semibold">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-red-500" />
-                  Nearby Spots
-                </div>
+          <Card style={styles.card}>
+            <CardHeader style={styles.cardHeader}>
+              <CardTitle style={styles.cardTitle}>
+                <View style={styles.iconContainer}>
+                  <MapPin style={styles.icon} color={colors.red} />
+                  <Text style={styles.sectionTitle}>Nearby Spots</Text>
+                </View>
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent style={styles.cardContent}>
               {nearbyVenues.map((venue) => (
-                <div 
+                <View
                   key={venue.id}
-                  className="flex items-center justify-between"
+                  style={styles.venueItem}
                   // Transition to VenueDetailScreen when a venue is clicked
-                  onClick={() => window.location.href = `/venues/${venue.id}`}
+                  onPress={() => navigation.navigate('VenueDetail', { venue })} // Corrected navigation
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="space-y-1">
-                    <p className="font-medium leading-none">{venue.name}</p>
-                    <p className="text-sm text-muted-foreground">{venue.distance} away</p>
-                  </div>
+                  <View style={styles.venueDetails}>
+                    <Text style={styles.venueName}>{venue.name}</Text>
+                    <Text style={styles.venueCategory}>{venue.distance} away</Text>
+                    {/* TODO: Calculate actual distance */}
+                  </View>
                   {/* Button to trigger the check-in action */}
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.location.href = `/check-in/${venue.id}`;
-                    }}
-                    size="sm"
-                  >
-                    Check In
-                  </Button>
-                </div>
+                  
+                </View>
               ))}
             </CardContent>
           </Card>
-        </div>
-      </ScrollArea>
-    </div>
+        </View>
+      </ScrollView>
+    </View>
   );
+
+  async function handleCheckIn(venueId) {
+    if (!user) {
+      Alert.alert("Error", "You must be logged in to check in.");
+      return;
+    }
+    try {
+      const response = await api.post('/api/checkins/', {
+        user: user.userId,
+        venue: venueId,
+        vibe_rating: 'Lively', // Default value
+        visibility: 'public', // Default value
+      });
+
+      if (response.status === 201) {
+        Alert.alert("Success", "Checked in successfully!");
+        // Optionally refresh data or update UI
+      } else {
+        Alert.alert("Error", "Failed to check in. Please try again.");
+      }
+    } catch (error) {
+      console.error("Check-in error:", error);
+      Alert.alert("Error", "Failed to check in. Please try again.");
+    }
+  }
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        color: 'red', // Or use colors.error if available
+    },
+    headerCard: {
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    cardHeader: {
+        paddingVertical: 16,
+    },
+    cardTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    scrollView: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingTop: 24,
+    },
+    content: {
+        paddingBottom: 24,
+    },
+    card: {
+        marginBottom: 24,
+    },
+    iconContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    icon: {
+        marginRight: 8,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+    },
+    cardContent: {
+        paddingTop: 16,
+    },
+    venueItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    venueDetails: {
+        flex: 1,
+    },
+    venueName: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    venueCategory: {
+        fontSize: 14,
+        color: 'gray', // Or use colors.textSecondary if available
+    },
+    badge: {
+        marginLeft: 12,
+    },
+    activityItem: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingVertical: 12,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    activityIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'lightgray', // Or use colors.secondary if available
+        marginRight: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    activityIcon: {
+        width: 16,
+        height: 16,
+    },
+    activityDetails: {
+        flex: 1,
+    },
+    activityText: {
+        fontSize: 14,
+    },
+    activityUser: {
+        fontWeight: '500',
+    },
+    activityVenue: {
+        fontWeight: '500',
+    },
+    activityTime: {
+        fontSize: 12,
+        color: 'gray', // Or use colors.textSecondary if available
+    },
+    checkInButton: {
+      // Add specific styles for your check-in button
+    }
+});
 
 export default HomeScreen;

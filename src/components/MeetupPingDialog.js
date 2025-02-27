@@ -1,204 +1,146 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal } from 'react-native';
-import { Text, TextInput, Button } from '@/components/ui';
-import { MapPin, X } from 'lucide-react-native';
-import useMeetupPings from '../hooks/useMeetupPings';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput } from 'react-native';
+import { MapPin, X, User } from 'lucide-react-native'; // Import User icon
+import { useTheme } from '../../src/context/ThemeContext';
 
-export default function MeetupPingDialog({
-  isVisible,
-  onClose,
-  friend,
-  venue,
-}) {
+const MeetupPingDialog = ({ isVisible, onClose, venue, onSendPing, onSelectFriend }) => {
+  const { colors, isDark } = useTheme();
   const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const { sendPing } = useMeetupPings();
 
-  const handleSend = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await sendPing(friend.id, venue.id, message);
-      onClose();
-    } catch (err) {
-      setError('Failed to send meetup request. Please try again.');
-    } finally {
-      setIsLoading(false);
+  const styles = getStyles({ colors, isDark });
+
+  const handleSendPing = () => {
+    if (!message.trim()) {
+      Alert.alert("Error", "Please enter a message to send.");
+      return;
     }
+
+    // onSendPing now expects a venueId and message
+    onSendPing(venue.id, message);
+    onClose();
+    setMessage('');
   };
 
   return (
     <Modal
+      animationType="slide"
+      transparent={true}
       visible={isVisible}
-      transparent
-      animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.dialog}>
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
           <View style={styles.header}>
-            <Text style={styles.title}>Send Meetup Request</Text>
-            <Button
-              variant="ghost"
-              onPress={onClose}
-              style={styles.closeButton}
-            >
-              <X size={20} color="#6b7280" />
-            </Button>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton} testID="close-button">
+              <X size={20} color={colors.text} />
+            </TouchableOpacity>
           </View>
-
+          <View style={styles.iconContainer}>
+            <MapPin size={40} color={colors.primary} />
+          </View>
           <View style={styles.content}>
-            <View style={styles.infoSection}>
-              <Text style={styles.label}>Friend</Text>
-              <Text style={styles.value}>{friend.username}</Text>
-            </View>
-
-            <View style={styles.infoSection}>
-              <Text style={styles.label}>Venue</Text>
-              <View style={styles.venueInfo}>
-                <Text style={styles.venueName}>{venue.name}</Text>
-                <View style={styles.addressContainer}>
-                  <MapPin size={16} color="#6b7280" />
-                  <Text style={styles.address}>{venue.address}</Text>
-                </View>
+                <TouchableOpacity 
+                    style={styles.button} 
+                    onPress={onSelectFriend}
+                    testID="select-friend-button">
+                    <View style={styles.buttonContent}>
+                        <User size={16} color={colors.buttonText} style={styles.buttonIcon} />
+                        <Text style={styles.buttonText}>Select Friend</Text>
+                    </View>
+                </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              placeholder="Write a message..."
+              placeholderTextColor={colors.textSecondary}
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              numberOfLines={4}
+              testID="message-input"
+            />
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={handleSendPing}
+              testID="send-ping-button">
+              <View style={styles.buttonContent}>
+                <MapPin size={16} color={colors.buttonText} style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Send Meetup Ping</Text>
               </View>
-            </View>
-
-            <View style={styles.messageSection}>
-              <Text style={styles.label}>Message</Text>
-              <TextInput
-                multiline
-                numberOfLines={3}
-                placeholder="Add a message to your request..."
-                value={message}
-                onChangeText={setMessage}
-                style={styles.messageInput}
-              />
-            </View>
-
-            {error && (
-              <Text style={styles.errorText}>{error}</Text>
-            )}
-          </View>
-
-          <View style={styles.footer}>
-            <Button
-              title="Cancel"
-              variant="outline"
-              onPress={onClose}
-              style={styles.button}
-              disabled={isLoading}
-            />
-            <Button
-              title={isLoading ? 'Sending...' : 'Send Request'}
-              onPress={handleSend}
-              style={styles.button}
-              disabled={isLoading}
-            />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
     </Modal>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  overlay: {
+const getStyles = ({ colors, isDark }) => StyleSheet.create({
+  centeredView: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  dialog: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    width: '100%',
-    maxWidth: 400,
+  modalView: {
+    margin: 20,
+    backgroundColor: colors.modalBackground,
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    width: '80%',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    width: '100%',
+    alignItems: 'flex-end',
   },
   closeButton: {
-    padding: 8,
+    padding: 5,
+  },
+  iconContainer: {
+    backgroundColor: colors.iconBackground,
+    borderRadius: 50,
+    padding: 15,
+    marginBottom: 20,
   },
   content: {
-    padding: 16,
+    width: '100%',
   },
-  infoSection: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 4,
-  },
-  value: {
+  input: {
+    backgroundColor: colors.inputBackground,
+    color: colors.text,
+    borderRadius: 10,
+    padding: 15,
     fontSize: 16,
-    color: '#111827',
+    marginBottom: 20,
+    textAlignVertical: 'top',
+    height: 120,
   },
-  venueInfo: {
-    backgroundColor: '#f9fafb',
-    padding: 12,
-    borderRadius: 8,
+  button: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
   },
-  venueName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  addressContainer: {
+  buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  address: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginLeft: 4,
+  buttonIcon: {
+    marginRight: 10,
   },
-  messageSection: {
-    marginTop: 8,
-  },
-  messageInput: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    padding: 12,
+  buttonText: {
+    color: colors.buttonText,
     fontSize: 16,
-    backgroundColor: '#fff',
-    textAlignVertical: 'top',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: 16,
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-  },
-  button: {
-    minWidth: 100,
-  },
-  errorText: {
-    color: '#ef4444',
-    marginTop: 8,
+    fontWeight: 'bold',
   },
 });
+
+export default MeetupPingDialog;
