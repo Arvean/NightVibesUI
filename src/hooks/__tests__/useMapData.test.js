@@ -1,22 +1,23 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import useMapData from '../useMapData';
-import axiosInstance from '../../axiosInstance';
+import { venuesAPI, friendsAPI } from '../../api';
 
-// Mock axios instance with all methods
-jest.mock('../../axiosInstance', () => {
+// Mock React Native platform
+jest.mock('react-native', () => ({
+  Platform: {
+    OS: 'web',
+    select: jest.fn((obj) => obj.web)
+  }
+}));
+
+// Mock API modules
+jest.mock('../../api', () => {
   return {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn(),
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn() }
+    venuesAPI: {
+      getAll: jest.fn(),
     },
-    defaults: {
-      headers: {
-        common: {}
-      }
+    friendsAPI: {
+      getNearby: jest.fn(),
     }
   };
 });
@@ -26,6 +27,15 @@ const mockGeolocation = {
   getCurrentPosition: jest.fn(),
 };
 global.navigator.geolocation = mockGeolocation;
+
+// Mock React Native Geolocation module
+jest.mock('@react-native-community/geolocation', () => {
+  return {
+    default: {
+      getCurrentPosition: jest.fn(),
+    }
+  };
+}, { virtual: true });
 
 describe('useMapData', () => {
   const mockVenues = [
@@ -53,21 +63,14 @@ describe('useMapData', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     
-    // Mock successful geolocation
+    // Mock successful geolocation - web platform
     mockGeolocation.getCurrentPosition.mockImplementation((success) => {
       success({ coords: { latitude: 40.7128, longitude: -74.0060 } });
     });
 
-    // Mock API responses - ensure these return promises with the expected structure
-    axiosInstance.get.mockImplementation((url) => {
-      if (url.includes('/api/venues')) {
-        return Promise.resolve({ data: mockVenues });
-      }
-      if (url.includes('/api/friends/nearby')) {
-        return Promise.resolve({ data: mockFriends });
-      }
-      return Promise.reject(new Error('Unknown endpoint')); 
-    });
+    // Mock API responses
+    venuesAPI.getAll.mockResolvedValue({ data: mockVenues });
+    friendsAPI.getNearby.mockResolvedValue({ data: mockFriends });
   });
 
   afterEach(() => {
@@ -99,12 +102,13 @@ describe('useMapData', () => {
     await waitForNextUpdate();
     
     expect(mockGeolocation.getCurrentPosition).toHaveBeenCalled();
-    expect(axiosInstance.get).toHaveBeenCalledWith(
-      expect.stringContaining('/api/venues/')
-    );
-    expect(axiosInstance.get).toHaveBeenCalledWith(
-      expect.stringContaining('/api/friends/nearby/')
-    );
+    expect(venuesAPI.getAll).toHaveBeenCalledWith({
+      latitude: 40.7128,
+      longitude: -74.0060,
+      include_vibe: true,
+      include_popularity: true
+    });
+    expect(friendsAPI.getNearby).toHaveBeenCalled();
     expect(result.current.venues).toEqual(mockVenues);
     expect(result.current.friends).toEqual(mockFriends.nearby_friends);
     expect(result.current.isLoading).toBe(false);
@@ -112,7 +116,6 @@ describe('useMapData', () => {
 
   test('handles geolocation error', async () => {
     // Mock geolocation error with the correct error structure
-    // The error callback expects an object with a code and message property
     mockGeolocation.getCurrentPosition.mockImplementation((success, error) =>
       error({
         code: 1, // PERMISSION_DENIED
@@ -131,13 +134,13 @@ describe('useMapData', () => {
   });
 
   test('handles API error', async () => {
-      // Mock API error
-      axiosInstance.get.mockRejectedValueOnce(new Error('API error'));
-      const { result, waitForNextUpdate } = renderHook(() => useMapData());
+    // Mock API error
+    venuesAPI.getAll.mockRejectedValueOnce(new Error('API error'));
+    const { result, waitForNextUpdate } = renderHook(() => useMapData());
 
-      await waitForNextUpdate();
-      expect(result.current.error).toBe('Failed to load map data. Please try again.');
-      expect(result.current.isLoading).toBe(false);
+    await waitForNextUpdate();
+    expect(result.current.error).toBe('Failed to load map data. Please try again.');
+    expect(result.current.isLoading).toBe(false);
   });
 
   test('filters venues based on search query', async () => {
@@ -165,7 +168,8 @@ describe('useMapData', () => {
     await waitForNextUpdate();
     
     // Clear previous API calls to check for new ones
-    axiosInstance.get.mockClear();
+    venuesAPI.getAll.mockClear();
+    friendsAPI.getNearby.mockClear();
     
     // Fast-forward time to trigger the interval
     act(() => {
@@ -173,16 +177,16 @@ describe('useMapData', () => {
     });
     
     // Wait for the async function to complete after the timer
-    // This ensures we don't check assertions before the mock is called
     await Promise.resolve();
     await Promise.resolve();
     
-    expect(axiosInstance.get).toHaveBeenCalledWith(
-      expect.stringContaining('/api/venues/')
-    );
-    expect(axiosInstance.get).toHaveBeenCalledWith(
-      expect.stringContaining('/api/friends/nearby/')
-    );
+    expect(venuesAPI.getAll).toHaveBeenCalledWith({
+      latitude: 40.7128,
+      longitude: -74.0060,
+      include_vibe: true,
+      include_popularity: true
+    });
+    expect(friendsAPI.getNearby).toHaveBeenCalled();
   });
 
   test('cleans up interval on unmount', async () => {
@@ -192,7 +196,8 @@ describe('useMapData', () => {
     await Promise.resolve();
     
     // Clear previous API calls 
-    axiosInstance.get.mockClear();
+    venuesAPI.getAll.mockClear();
+    friendsAPI.getNearby.mockClear();
     
     // Unmount the component
     unmount();
@@ -206,6 +211,7 @@ describe('useMapData', () => {
     await Promise.resolve();
     
     // Verify no calls were made after unmounting
-    expect(axiosInstance.get).not.toHaveBeenCalled();
+    expect(venuesAPI.getAll).not.toHaveBeenCalled();
+    expect(friendsAPI.getNearby).not.toHaveBeenCalled();
   });
 });

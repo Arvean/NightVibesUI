@@ -83,6 +83,9 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // Original request config
+    const originalRequest = error.config;
+
     // Log errors in development
     if (__DEV__) {
       console.error('API Error:', {
@@ -101,6 +104,57 @@ api.interceptors.response.use(
       });
     }
 
+    // Handle token expiration and refresh
+    if (error.response.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url === '/api/auth/token/refresh/') {
+        // If the refresh token request itself failed, we need to log out
+        if (typeof window !== 'undefined') {
+          // For web
+          window.dispatchEvent(new CustomEvent('auth-error', { detail: 'Session expired' }));
+        } else {
+          // For React Native, we'll handle this in the auth context
+          console.error('Token refresh failed');
+        }
+        return Promise.reject(error);
+      }
+
+      // Mark the request as retried to prevent infinite loop
+      originalRequest._retry = true;
+
+      try {
+        // Try to refresh the token
+        const refreshToken = await AsyncStorage.getItem('refresh_token');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        const response = await api.post('/api/auth/token/refresh/', { refresh: refreshToken });
+        const { access } = response.data;
+
+        // Store the new token
+        await AsyncStorage.setItem('access_token', access);
+        
+        // Update axios default header
+        api.setAuthToken(access);
+        
+        // Update the original request with the new token
+        originalRequest.headers.Authorization = `Bearer ${access}`;
+        
+        // Retry the original request
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Refresh token failed, logout from the application
+        if (typeof window !== 'undefined') {
+          // For web
+          window.dispatchEvent(new CustomEvent('auth-error', { detail: 'Session expired' }));
+        } else {
+          // For React Native, we'll handle this in the auth context
+          console.error('Token refresh failed');
+        }
+        return Promise.reject(error);
+      }
+    }
+
     // Handle specific HTTP status codes
     switch (error.response.status) {
       case 400:
@@ -110,8 +164,12 @@ api.interceptors.response.use(
           originalError: error,
         });
       case 401:
-        // Let the AuthContext handle 401 errors
-        return Promise.reject(error);
+        // We already handled the token refresh above
+        // This is for other 401 errors
+        return Promise.reject({
+          message: 'Authentication failed. Please login again.',
+          originalError: error,
+        });
       case 403:
         return Promise.reject({
           message: 'You do not have permission to perform this action.',

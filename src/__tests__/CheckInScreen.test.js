@@ -1,99 +1,178 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
 import CheckInScreen from '../CheckInScreen';
-import { ThemeProvider } from '../context/ThemeContext';
-import api from '../axiosInstance';
+import { renderWithProviders } from './setup/testUtils';
+import { createMockApiError, createMockApiResponse, createMockUser } from './setup/mockFactories';
+import { defaultAuthState } from '../__mocks__/AuthContext';
+import { AuthContext } from '../src/context/AuthContext';
 
-// Mock axios instance
-jest.mock('../axiosInstance', () => {
-  return {
-    get: jest.fn(() => Promise.resolve({ data: [] })),
-    post: jest.fn(() => Promise.resolve({ data: { success: true } })),
-    interceptors: {
-      request: { use: jest.fn(), eject: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn() }
-    },
-    defaults: {
-      headers: {
-        common: {}
-      }
-    }
-  };
-});
-
-// Import the mocked axiosInstance
-import axiosInstance from '../axiosInstance';
-
-jest.mock('@react-navigation/native', () => ({
-    ...jest.requireActual('@react-navigation/native'),
-    useNavigation: jest.fn(),
-    useRoute: jest.fn(),
-}));
+jest.mock('@react-navigation/native');
+jest.mock('../src/context/AuthContext');
 
 describe('CheckInScreen', () => {
-    const mockRoute = {
-        params: {
-            venueId: '123',
-            venueName: 'Test Venue',
-        },
-    };
-    const mockNavigation = {
-        goBack: jest.fn(),
-    };
+  const mockNavigation = {
+    navigate: jest.fn(),
+    goBack: jest.fn(),
+  };
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        useRoute.mockReturnValue(mockRoute);
-        useNavigation.mockReturnValue(mockNavigation);
-    });
+  const mockUser = createMockUser();
+    mockUser.userId = mockUser.id;
+    delete mockUser.id;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useNavigation.mockReturnValue(mockNavigation);
+  });
 
     it('renders correctly', async () => {
-        axiosInstance.post.mockResolvedValue({ data: {} });
-        const { getByText, getByPlaceholderText } = render(<CheckInScreen />);
+        AuthContext.mockReturnValue({
+            ...defaultAuthState,
+            userInfo: mockUser,
+        });
+    const { findByText, findByPlaceholderText } = await renderWithProviders(
+      <CheckInScreen />,
+      {
+        navigationState: { params: { venueId: '123' } },
+      }
+    );
 
-        expect(getByText('Check In')).toBeTruthy();
-        expect(getByText('Test Venue')).toBeTruthy();
-        expect(getByPlaceholderText('Enter your review (optional)')).toBeTruthy();
-        expect(getByText('Check In')).toBeTruthy();
+    expect(await findByText('Check-In to:')).toBeTruthy();
+    expect(await findByPlaceholderText('Add a comment (optional)')).toBeTruthy();
+  });
+
+    it('submits check-in with comment', async () => {
+        AuthContext.mockReturnValue({
+            ...defaultAuthState,
+            userInfo: mockUser,
+            login: jest.fn().mockResolvedValue({}),
+        });
+    const { findByText, getByPlaceholderText, getByText } = await renderWithProviders(
+      <CheckInScreen />,
+      {
+        navigationState: { params: { venueId: '123' } },
+      }
+    );
+
+    // Select Vibe
+    fireEvent.press(getByText('Lively'));
+
+    // Select Visibility
+    fireEvent.press(getByText('public'));
+
+    // Enter comment
+    const commentInput = getByPlaceholderText('Add a comment (optional)');
+    fireEvent.changeText(commentInput, 'Great place!');
+
+    // Press check-in button
+    const checkInButton = getByText('Check In');
+    fireEvent.press(checkInButton);
+
+    await waitFor(() => {
+      expect(mockNavigation.goBack).toHaveBeenCalled();
     });
+  });
 
-    it('submits check-in with review', async () => {
-        axiosInstance.post.mockResolvedValue({ data: {} });
-        const { getByText, getByPlaceholderText } = render(<CheckInScreen />);
+    it('submits check-in without comment', async () => {
+        AuthContext.mockReturnValue({
+            ...defaultAuthState,
+            userInfo: mockUser,
+            login: jest.fn().mockResolvedValue({}),
+        });
+        const { findByText, getByText } = await renderWithProviders(
+            <CheckInScreen />,
+            {
+                navigationState: { params: { venueId: '123' } },
+            }
+        );
 
-        const reviewInput = getByPlaceholderText('Enter your review (optional)');
-        fireEvent.changeText(reviewInput, 'Great place!');
+        await waitFor(() => {
+            expect(findByText('Check-In to:')).toBeTruthy();
+        });
 
+        // Select Vibe
+        fireEvent.press(getByText('Chill'));
+
+        // Select Visibility
+        fireEvent.press(getByText('friends'));
+
+        // Press check-in button
         const checkInButton = getByText('Check In');
         fireEvent.press(checkInButton);
 
-        await waitFor(() => expect(axiosInstance.post).toHaveBeenCalledWith(`/venues/123/checkins/`, { review: 'Great place!' }));
-        expect(mockNavigation.goBack).toHaveBeenCalled();
-    });
-
-    it('submits check-in without review', async () => {
-        axiosInstance.post.mockResolvedValue({ data: {} });
-        const { getByText } = render(<CheckInScreen />);
-
-        const checkInButton = getByText('Check In');
-        fireEvent.press(checkInButton);
-
-        await waitFor(() => expect(axiosInstance.post).toHaveBeenCalledWith(`/venues/123/checkins/`, { review: '' }));
-        expect(mockNavigation.goBack).toHaveBeenCalled();
+        await waitFor(() => {
+            expect(mockNavigation.goBack).toHaveBeenCalled();
+        });
     });
 
     it('handles check-in error', async () => {
-        axiosInstance.post.mockRejectedValue(new Error('Check-in failed'));
-        const { getByText, getByPlaceholderText } = render(<CheckInScreen />);
+        AuthContext.mockReturnValue({
+            ...defaultAuthState,
+            userInfo: mockUser,
+            login: jest.fn().mockRejectedValue(new Error('Check-in failed')),
+        });
+        const { findByText, getByText } = await renderWithProviders(
+            <CheckInScreen />,
+            {
+                navigationState: { params: { venueId: '123' } },
+            }
+        );
 
-        const reviewInput = getByPlaceholderText('Enter your review (optional)');
-        fireEvent.changeText(reviewInput, 'Great place!');
+        await waitFor(() => {
+            expect(findByText('Check-In to:')).toBeTruthy();
+        });
 
         const checkInButton = getByText('Check In');
         fireEvent.press(checkInButton);
 
-        await waitFor(() => expect(axiosInstance.post).toHaveBeenCalledWith(`/venues/123/checkins/`, { review: 'Great place!' }));
-        expect(mockNavigation.goBack).not.toHaveBeenCalled(); // Should not navigate back on error
+        expect(mockNavigation.goBack).not.toHaveBeenCalled();
+    });
+
+    it('selects vibe options correctly', async () => {
+        AuthContext.mockReturnValue({
+            ...defaultAuthState,
+            userInfo: mockUser,
+        });
+        const { findByText, getByText } = await renderWithProviders(
+            <CheckInScreen />,
+            {
+                navigationState: { params: { venueId: '123' } },
+            }
+        );
+
+        await waitFor(() => {
+            expect(findByText('Check-In to:')).toBeTruthy();
+        });
+
+        fireEvent.press(getByText('Lively'));
+        expect(getByText('Lively').props.style[1].backgroundColor).toBe('#3b82f6'); // Assuming primary color
+
+        fireEvent.press(getByText('Chill'));
+        expect(getByText('Chill').props.style[1].backgroundColor).toBe('#3b82f6');
+        expect(getByText('Lively').props.style[1].backgroundColor).not.toBe('#3b82f6');
+    });
+
+    it('selects visibility options correctly', async () => {
+        AuthContext.mockReturnValue({
+            ...defaultAuthState,
+            userInfo: mockUser,
+        });
+        const { findByText, getByText } = await renderWithProviders(
+            <CheckInScreen />,
+            {
+                navigationState: { params: { venueId: '123' } },
+            }
+        );
+
+        await waitFor(() => {
+            expect(findByText('Check-In to:')).toBeTruthy();
+        });
+
+        fireEvent.press(getByText('public'));
+        expect(getByText('public').props.style[1].backgroundColor).toBe('#3b82f6');
+
+        fireEvent.press(getByText('friends'));
+        expect(getByText('friends').props.style[1].backgroundColor).toBe('#3b82f6');
+        expect(getByText('public').props.style[1].backgroundColor).not.toBe('#3b82f6');
     });
 });

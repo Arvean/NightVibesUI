@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axiosInstance from '../axiosInstance';
+import { Platform } from 'react-native';
+import { venuesAPI, friendsAPI } from '../api';
 
 /**
  * Custom hook for managing map data including venues, friends, and viewport
@@ -21,10 +22,26 @@ const useMapData = () => {
 
   // Fetch data based on coordinates
   const fetchData = async (latitude, longitude) => {
+    if (!latitude || !longitude) {
+      setError('Location coordinates required');
+      return;
+    }
+
     try {
+      setIsLoading(true);
+      
+      // Create params object for venue request
+      const venueParams = {
+        latitude,
+        longitude,
+        include_vibe: true,
+        include_popularity: true
+      };
+
+      // Make parallel API requests
       const [venuesRes, friendsRes] = await Promise.all([
-        axiosInstance.get(`/api/venues/?latitude=${latitude}&longitude=${longitude}&include_vibe=true&include_popularity=true`),
-        axiosInstance.get(`/api/friends/nearby/?latitude=${latitude}&longitude=${longitude}`)
+        venuesAPI.getAll(venueParams),
+        friendsAPI.getNearby()
       ]);
 
       // Sort venues based on current sort preference
@@ -37,11 +54,13 @@ const useMapData = () => {
       });
 
       setVenues(sortedVenues);
-      setFriends(friendsRes.data.nearby_friends);
+      setFriends(friendsRes.data.nearby_friends || []);
       setError(null);
     } catch (err) {
       setError('Failed to load map data. Please try again.');
       console.error('Error fetching map data:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -49,26 +68,60 @@ const useMapData = () => {
   useEffect(() => {
     const fetchLocationAndData = async () => {
       try {
-        const position = await new Promise((resolve, reject) => {
-          if (!navigator.geolocation) {
-            reject(new Error('Geolocation is not supported by your browser'));
-            return;
+        // Different geolocation approach based on platform
+        if (Platform.OS === 'web') {
+          // Web browser geolocation
+          const position = await new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+              reject(new Error('Geolocation is not supported by your browser'));
+              return;
+            }
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 20000,
+              maximumAge: 1000,
+            });
+          });
+          
+          const { latitude, longitude } = position.coords;
+          setViewport(prev => ({
+            ...prev,
+            latitude,
+            longitude
+          }));
+          
+          await fetchData(latitude, longitude);
+        } else {
+          // React Native - import Geolocation from '@react-native-community/geolocation'
+          // or use Expo Location if available
+          try {
+            const Geolocation = require('@react-native-community/geolocation').default;
+            Geolocation.getCurrentPosition(
+              async (position) => {
+                const { latitude, longitude } = position.coords;
+                setViewport(prev => ({
+                  ...prev,
+                  latitude,
+                  longitude
+                }));
+                await fetchData(latitude, longitude);
+              },
+              (error) => {
+                console.error('Geolocation error:', error);
+                setError('Unable to get your location. Please enable location services.');
+                setIsLoading(false);
+              },
+              { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+            );
+          } catch (e) {
+            console.error('Geolocation module error:', e);
+            setError('Location services not available.');
+            setIsLoading(false);
           }
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-        
-        const { latitude, longitude } = position.coords;
-        setViewport(prev => ({
-          ...prev,
-          latitude,
-          longitude
-        }));
-        
-        await fetchData(latitude, longitude);
+        }
       } catch (err) {
         console.error('Error getting location:', err);
         setError('Unable to get your location. Please enable location services.');
-      } finally {
         setIsLoading(false);
       }
     };
@@ -89,8 +142,8 @@ const useMapData = () => {
 
   // Filter venues based on search query
   const filteredVenues = venues.filter(venue =>
-    venue.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    venue.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    venue.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    venue.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (venue.current_vibe && venue.current_vibe.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 

@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.85% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/21</span>
+                <span class='fraction'>0/21</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.69% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.85% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/21</span>
+                <span class='fraction'>0/21</span>
             </div>
         
             
@@ -326,14 +326,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -351,7 +348,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -391,7 +391,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -413,7 +413,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -430,7 +430,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -440,7 +440,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -461,7 +461,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -557,11 +557,11 @@ import CheckInScreen from './CheckInScreen';
 import EditProfileScreen from './EditProfileScreen';
 &nbsp;
 // Creating tab and stack navigators
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+const Tab = <span class="cstat-no" title="statement not covered" >createBottomTabNavigator();</span>
+const Stack = <span class="cstat-no" title="statement not covered" >createStackNavigator();</span>
 &nbsp;
 // Screen options for stack navigator
-const screenOptions = {
+const screenOptions = <span class="cstat-no" title="statement not covered" >{</span>
   headerStyle: {
     backgroundColor: '#fff',
     elevation: 0,
@@ -582,7 +582,7 @@ const screenOptions = {
  * - Stack navigator for social-related screens.
  * - Includes FriendActivity, FriendList, FriendDiscovery, FriendRequests, and MeetupList screens.
  */
-const SocialStack = <span class="fstat-no" title="function not covered" >()</span> =&gt; (
+const SocialStack = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >  &lt;Stack.Navigator screenOptions={screenOptions}&gt;</span>
     {/* Activity Feed Screen */}
     &lt;Stack.Screen
@@ -622,7 +622,7 @@ const SocialStack = <span class="fstat-no" title="function not covered" >()</spa
  * - Stack navigator for venue-related screens.
  * - Includes VenueList and VenueDetail screens.
  */
-const VenueStack = <span class="fstat-no" title="function not covered" >()</span> =&gt; (
+const VenueStack = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >  &lt;Stack.Navigator screenOptions={screenOptions}&gt;</span>
     {/* Venue List Screen */}
     &lt;Stack.Screen
@@ -644,7 +644,7 @@ const VenueStack = <span class="fstat-no" title="function not covered" >()</span
  * - Stack navigator for notification-related screens.
  * - Includes NotificationScreen and NotificationPreferencesScreen.
  */
-const NotificationStack = <span class="fstat-no" title="function not covered" >()</span> =&gt; (
+const NotificationStack = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >  &lt;Stack.Navigator screenOptions={screenOptions}&gt;</span>
     {/* Notification Screen */}
     &lt;Stack.Screen
@@ -661,7 +661,7 @@ const NotificationStack = <span class="fstat-no" title="function not covered" >(
   &lt;/Stack.Navigator&gt;
 );
 &nbsp;
-const CheckInStack = <span class="fstat-no" title="function not covered" >()</span> =&gt; (
+const CheckInStack = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >  &lt;Stack.Navigator screenOptions={screenOptions}&gt;</span>
     &lt;Stack.Screen
       name="CheckIn"
@@ -671,7 +671,7 @@ const CheckInStack = <span class="fstat-no" title="function not covered" >()</sp
   &lt;/Stack.Navigator&gt;
 );
 &nbsp;
-const ProfileStack = <span class="fstat-no" title="function not covered" >()</span> =&gt; (
+const ProfileStack = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >    &lt;Stack.Navigator screenOptions={screenOptions}&gt;</span>
         &lt;Stack.Screen
         name="Profile"
@@ -691,8 +691,8 @@ const ProfileStack = <span class="fstat-no" title="function not covered" >()</sp
  * - Tab navigator for the main app screens.
  * - Includes Home, Map, Venues, Social, Notifications, and Profile screens.
  */
-export default function MainNavigator() {
-  return (
+export default function <span class="fstat-no" title="function not covered" >MainNavigator(</span>) {
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;Tab.Navigator
       screenOptions={{
         tabBarStyle: {
@@ -763,7 +763,7 @@ export default function MainNavigator() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-02-27T04:25:22.106Z
+                at 2025-03-03T19:33:32.480Z
             </div>
         <script src="../prettify.js"></script>
         <script>

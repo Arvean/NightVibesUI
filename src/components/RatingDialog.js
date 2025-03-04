@@ -39,19 +39,9 @@ const RatingDialog = ({
 
   return (
     <>
-      {/* Add testID to the submit button */}
-      <TouchableOpacity
-        style={[styles.button, styles.submitButton, isSubmitDisabled && styles.disabledButton]}
-        onPress={handleSubmit}
-        disabled={isSubmitDisabled}
-        testID="submit-rating-button"
-      >
-        {isSubmitting ? (
-          <ActivityIndicator size="small" color="white" />
-        ) : (
-          <Text style={styles.buttonText}>Submit</Text>
-        )}
-      </TouchableOpacity>
+      {/* Render the trigger element */}
+      {React.cloneElement(trigger, { onPress: handleOpen })}
+      
       <Modal
         visible={isVisible}
         transparent={true}
@@ -67,7 +57,7 @@ const RatingDialog = ({
                   key={star}
                   onPress={() => handleRating(star)}
                   disabled={isSubmitting}
-                  data-testid={`star-${star}`}
+                  testID={`star-${star}`}
                   accessibilityLabel={`Rate ${star} stars`}
                 >
                   <Star
@@ -87,6 +77,7 @@ const RatingDialog = ({
               multiline
               numberOfLines={3}
               disabled={isSubmitting}
+              testID="comment-input"
             />
             
             {error && (
@@ -98,7 +89,7 @@ const RatingDialog = ({
                 style={[styles.button, styles.cancelButton]}
                 onPress={handleClose}
                 disabled={isSubmitting}
-                data-testid="close-button"
+                testID="close-button"
               >
                 <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
@@ -106,7 +97,7 @@ const RatingDialog = ({
                 style={[styles.button, styles.submitButton, isSubmitDisabled && styles.disabledButton]}
                 onPress={handleSubmit}
                 disabled={isSubmitDisabled}
-                data-testid="submit-rating-button"
+                testID="submit-rating-button"
               >
                 {isSubmitting ? (
                   <ActivityIndicator size="small" color="white" />

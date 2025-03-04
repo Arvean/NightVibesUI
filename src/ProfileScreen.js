@@ -5,6 +5,24 @@ import { AuthContext } from './AuthContext';
 import api from './axiosInstance';
 import { useNavigation } from '@react-navigation/native';
 
+const getStyles = ({ colors, isDark }) => StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: colors.background,
+    },
+    text: {
+        color: colors.text,
+        fontSize: 16,
+        marginBottom: 10,
+    },
+    errorText: {
+        color: colors.error,
+        fontSize: 16,
+    }
+});
+
 const ProfileScreen = () => {
   const { colors, isDark } = useTheme();
   const styles = getStyles({ colors, isDark });
@@ -71,23 +89,5 @@ const ProfileScreen = () => {
     </View>
   );
 };
-
-    const getStyles = ({ colors, isDark }) => StyleSheet.create({
-        container: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: colors.background,
-        },
-        text: {
-            color: colors.text,
-            fontSize: 16,
-            marginBottom: 10,
-        },
-        errorText: {
-            color: colors.error,
-            fontSize: 16,
-        }
-    });
 
 export default ProfileScreen;

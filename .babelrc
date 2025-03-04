@@ -1,0 +1,17 @@
+{
+  "presets": ["module:metro-react-native-babel-preset"],
+  "plugins": [
+    ["@babel/plugin-transform-modules-commonjs"],
+    ["module:react-native-reanimated/plugin"]
+  ],
+  "env": {
+    "test": {
+      "plugins": [
+        ["@babel/plugin-transform-modules-commonjs"],
+        ["babel-plugin-transform-define", {
+          "__DEV__": true
+        }]
+      ]
+    }
+  }
+} 

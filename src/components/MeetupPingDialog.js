@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { MapPin, X, User } from 'lucide-react-native'; // Import User icon
 import { useTheme } from '../../src/context/ThemeContext';
 

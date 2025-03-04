@@ -1,38 +1,60 @@
-jest.mock('react-native', () => ({
-  Platform: {
-    OS: 'ios',
-    select: jest.fn((selector) => selector.ios)
-  }
-}));
-
-const mockAxios = {
-  get: jest.fn(() => Promise.resolve({ data: {} })),
-  post: jest.fn(() => Promise.resolve({ data: {} })),
-  put: jest.fn(() => Promise.resolve({ data: {} })),
-  delete: jest.fn(() => Promise.resolve({ data: {} })),
-  create: jest.fn(() => mockAxios),
-  defaults: {
-    baseURL: 'http://localhost:8000',
-    headers: {
-      common: {},
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    }
-  },
+const mockAxiosInstance = {
+  get: jest.fn(() => Promise.resolve({ data: {}, status: 200 })),
+  post: jest.fn(() => Promise.resolve({ data: {}, status: 201 })),
+  put: jest.fn(() => Promise.resolve({ data: {}, status: 200 })),
+  delete: jest.fn(() => Promise.resolve({ data: {}, status: 204 })),
+  patch: jest.fn(() => Promise.resolve({ data: {}, status: 200 })),
+  create: jest.fn(() => mockAxiosInstance), // Mock the create method to return the mock itself
   interceptors: {
     request: { use: jest.fn(), eject: jest.fn() },
-    response: { use: jest.fn(), eject: jest.fn() }
+    response: { use: jest.fn(), eject: jest.fn() },
   },
-  setAuthToken: jest.fn((token) => {
-    if (token) {
-      mockAxios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete mockAxios.defaults.headers.common['Authorization'];
+  defaults: {
+    headers: {
+      common: {},
+    },
+  },
+  mockClear: () => {
+    mockAxiosInstance.get.mockClear();
+    mockAxiosInstance.post.mockClear();
+    mockAxiosInstance.put.mockClear();
+    mockAxiosInstance.delete.mockClear();
+    mockAxiosInstance.patch.mockClear();
+  },
+  mockResponseFor: (method, url, responseData, status = 200) => {
+    const mockFn = mockAxiosInstance[method];
+    if (!mockFn) {
+      throw new Error(`Invalid method: ${method}`);
     }
-  }),
-  clearAuthToken: jest.fn(() => {
-    delete mockAxios.defaults.headers.common['Authorization'];
-  })
+    mockFn.mockImplementation((requestUrl, data, config) => {
+      if (requestUrl.includes(url)) {
+        return Promise.resolve({
+          data: responseData,
+          status: status,
+          statusText: 'OK',
+          headers: {},
+          config: {},
+          request: {}
+        });
+      }
+      return Promise.reject(new Error('Unexpected URL'));
+    });
+  },
+  mockErrorFor: (method, url, error) => {
+    const mockFn = mockAxiosInstance[method];
+    if (!mockFn) {
+      throw new Error(`Invalid method: ${method}`);
+    }
+    mockFn.mockImplementation((requestUrl) => {
+      if (requestUrl.includes(url)) {
+        return Promise.reject(error);
+      }
+      return Promise.reject(new Error('Unexpected URL'));
+    });
+  }
 };
 
-export default mockAxios;
+// Add this as a global before tests run
+global.axiosInstance = mockAxiosInstance;
+
+export default mockAxiosInstance;

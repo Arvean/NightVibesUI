@@ -115,6 +115,7 @@ const RegisterScreen = () => {
                         <Checkbox
                             value={agreeToTerms}
                             onValueChange={setAgreeToTerms}
+                            testID="terms-checkbox"
                         />
                         <Text style={styles.termsText}>
                             I agree to the{' '}
