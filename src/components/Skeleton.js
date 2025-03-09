@@ -1,18 +1,28 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
+/**
+ * SkeletonItem Component:
+ * A reusable component for creating skeleton loading placeholders.
+ * @param {object} props - The component's props.
+ * @param {number|string} props.width - The width of the skeleton item.
+ * @param {number|string} props.height - The height of the skeleton item.
+ * @param {object} [props.style] - Additional styles to apply to the skeleton item.
+ */
 export const SkeletonItem = ({ width, height, style }) => {
   const { colors } = useTheme();
+  // Create an animated value for controlling the opacity.
   const animatedValue = useRef(new Animated.Value(0)).current;
 
+  // useEffect hook to create a looping animation.
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(animatedValue, {
           toValue: 1,
           duration: 1000,
-          useNativeDriver: true,
+          useNativeDriver: true, // Use native driver for better performance
         }),
         Animated.timing(animatedValue, {
           toValue: 0,
@@ -23,9 +33,10 @@ export const SkeletonItem = ({ width, height, style }) => {
     ).start();
   }, []);
 
+  // Interpolate the animated value to create an opacity animation.
   const opacity = animatedValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.3, 0.7],
+    outputRange: [0.3, 0.7], // Adjust opacity values for desired effect
   });
 
   return (
@@ -35,7 +46,7 @@ export const SkeletonItem = ({ width, height, style }) => {
         {
           width,
           height,
-          backgroundColor: colors.skeletonBase,
+          backgroundColor: colors.skeletonBase, // Use dynamic color from theme
           opacity,
         },
         style,
@@ -44,6 +55,10 @@ export const SkeletonItem = ({ width, height, style }) => {
   );
 };
 
+/**
+ * ActivitySkeleton Component:
+ * A skeleton loading placeholder for an activity item.
+ */
 export const ActivitySkeleton = () => {
   return (
     <View style={styles.activityContainer}>
@@ -63,6 +78,10 @@ export const ActivitySkeleton = () => {
   );
 };
 
+/**
+ * VenueSkeleton Component:
+ * A skeleton loading placeholder for a venue card.
+ */
 export const VenueSkeleton = () => {
   return (
     <View style={styles.venueContainer}>
@@ -83,6 +102,10 @@ export const VenueSkeleton = () => {
   );
 };
 
+/**
+ * MeetupPingSkeleton Component:
+ * A skeleton loading placeholder for a meetup ping item.
+ */
 export const MeetupPingSkeleton = () => {
   return (
     <View style={styles.pingContainer}>
@@ -99,9 +122,10 @@ export const MeetupPingSkeleton = () => {
   );
 };
 
+// StyleSheet for the skeleton components.
 const styles = StyleSheet.create({
   skeleton: {
-    borderRadius: 4,
+    borderRadius: 4, // Rounded corners for the skeleton items
   },
   activityContainer: {
     padding: 16,
@@ -113,7 +137,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   avatar: {
-    borderRadius: 20,
+    borderRadius: 20, // Circular avatar
     marginRight: 12,
   },
   headerText: {

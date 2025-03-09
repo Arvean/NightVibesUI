@@ -1,11 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../axiosInstance';
 
+/**
+ * Custom hook for fetching and managing friend activity data.
+ * This hook handles fetching friend activities, polling for updates,
+ * liking activities, and commenting on activities.
+ * @returns {object} An object containing the activities, loading state, error state,
+ *                    and functions for refreshing, liking, and commenting.
+ */
 export default function useFriendActivity() {
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // useCallback ensures that fetchActivities doesn't change unless its dependencies change
   const fetchActivities = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -31,10 +39,14 @@ export default function useFriendActivity() {
     return () => clearInterval(interval);
   }, [fetchActivities]);
 
+  /**
+   * Likes an activity.
+   * @param {string} activityId - The ID of the activity to like.
+   */
   const likeActivity = async (activityId) => {
     try {
       await api.post(`/api/friends/activity/${activityId}/like/`);
-      // Update local state
+      // Update local state to reflect the like without refetching
       setActivities(current =>
         current.map(activity =>
           activity.id === activityId
@@ -47,12 +59,19 @@ export default function useFriendActivity() {
     }
   };
 
+  /**
+   * Comments on an activity.
+   * @param {string} activityId - The ID of the activity to comment on.
+   * @param {string} comment - The comment content.
+   * @returns {Promise<object>} The new comment data.
+   * @throws {Error} If the comment could not be posted.
+   */
   const commentOnActivity = async (activityId, comment) => {
     try {
       const response = await api.post(`/api/friends/activity/${activityId}/comment/`, {
         content: comment,
       });
-      // Update local state
+      // Update local state to include the new comment without refetching
       setActivities(current =>
         current.map(activity =>
           activity.id === activityId
@@ -72,11 +91,11 @@ export default function useFriendActivity() {
   };
 
   return {
-    activities,
-    isLoading,
-    error,
-    refreshActivities: fetchActivities,
-    likeActivity,
-    commentOnActivity,
+    activities, // The list of friend activities.
+    isLoading, // Boolean indicating if the activities are being loaded.
+    error, // Error message, if any.
+    refreshActivities: fetchActivities, // Function to manually refresh activities.
+    likeActivity, // Function to like an activity.
+    commentOnActivity, // Function to comment on an activity.
   };
 }

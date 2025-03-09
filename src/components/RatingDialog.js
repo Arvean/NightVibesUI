@@ -4,6 +4,17 @@ import { StyleSheet } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 
+/**
+ * RatingDialog Component:
+ * A modal dialog for submitting or updating a venue rating.
+ * @param {string} venueName - The name of the venue being rated.
+ * @param {function} onSubmit - Callback function to handle rating submission.
+ * @param {boolean} isSubmitting - Indicates whether the submission is in progress.
+ * @param {string} error - Error message to display, if any.
+ * @param {number} [initialRating=5] - The initial rating value.
+ * @param {string} [initialComment='Great venue!'] - The initial comment value.
+ * @param {ReactNode} trigger - The element that triggers the dialog to open.
+ */
 const RatingDialog = ({ 
   venueName, 
   onSubmit, 
@@ -43,9 +54,9 @@ const RatingDialog = ({
       {React.cloneElement(trigger, { onPress: handleOpen })}
       
       <Modal
-        visible={isVisible}
-        transparent={true}
         animationType="slide"
+        transparent={true}
+        visible={isVisible}
         onRequestClose={handleClose}
       >
         <View style={styles.centeredView}>
@@ -113,12 +124,13 @@ const RatingDialog = ({
   );
 };
 
+// StyleSheet for the RatingDialog component.
 const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent background
   },
   modalView: {
     backgroundColor: 'white',
@@ -153,7 +165,7 @@ const styles = StyleSheet.create({
     padding: 10,
     width: '100%',
     marginBottom: 20,
-    textAlignVertical: 'top',
+    textAlignVertical: 'top', // For multiline text input
   },
   errorText: {
     color: 'red',
@@ -176,11 +188,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   submitButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#3b82f6', // Using a blue color for the submit button
     marginLeft: 10,
   },
   disabledButton: {
-    backgroundColor: '#a0aec0',
+    backgroundColor: '#a0aec0', // Grayed out color for disabled state
   },
   buttonText: {
     color: 'white',

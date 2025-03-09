@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
+// Importing custom UI components.
 import { Text, Button } from '@/components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
+// Importing icons from lucide-react-native.
 import {
   MapPin,
   Clock,
@@ -10,17 +12,24 @@ import {
   User,
   MessageSquare,
 } from 'lucide-react-native';
+// Importing the theme context.
 import { useTheme } from './context/ThemeContext';
+// Importing custom components for error handling and skeleton loading.
 import { ScreenErrorBoundary } from './components/ErrorBoundary';
 import { MeetupPingSkeleton } from './components/Skeleton';
+// Importing a custom animation component.
 import { Stagger, SlideIn, Scale } from './components/Animated';
+// Importing the custom hook for managing meetup pings.
 import useMeetupPings from './hooks/useMeetupPings';
+// Importing date-fns for date formatting.
 import { format } from 'date-fns';
 
+// MeetupPingItem component to display individual meetup ping information.
 const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
   const { colors } = useTheme();
   const [isRespondLoading, setIsRespondLoading] = React.useState(false);
 
+  // Handler for responding to a meetup ping (accept/decline).
   const handleRespond = async (status) => {
     try {
       setIsRespondLoading(true);
@@ -30,6 +39,7 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
     }
   };
 
+  // Function to render the status badge based on the ping's status.
   const renderStatus = () => {
     switch (ping.status) {
       case 'accepted':
@@ -75,16 +85,19 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
           },
         ]}
       >
+        {/* Header section with user info and status. */}
         <View style={styles.pingHeader}>
           <View style={styles.userInfo}>
             <User size={20} color={colors.textSecondary} />
             <Text style={[styles.username, { color: colors.text }]}>
+              {/* Display the receiver's username if the user is the sender, otherwise display the sender's username. */}
               {ping.is_sender ? ping.receiver.username : ping.sender.username}
             </Text>
           </View>
           {renderStatus()}
         </View>
 
+        {/* Venue information. */}
         <View style={styles.venueInfo}>
           <MapPin size={16} color={colors.textSecondary} />
           <Text style={[styles.venueName, { color: colors.text }]}>
@@ -92,6 +105,7 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
           </Text>
         </View>
 
+        {/* Display the meetup message if available. */}
         {ping.message && (
           <View style={styles.messageContainer}>
             <MessageSquare size={16} color={colors.textSecondary} />
@@ -101,6 +115,7 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
           </View>
         )}
 
+        {/* Display the creation time of the meetup ping. */}
         <View style={styles.timeInfo}>
           <Clock size={14} color={colors.textSecondary} />
           <Text style={[styles.timeText, { color: colors.textSecondary }]}>
@@ -108,6 +123,7 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
           </Text>
         </View>
 
+        {/* Display action buttons (accept/decline or cancel) if the ping is pending. */}
         {ping.status === 'pending' && (
           <View
             style={[
@@ -115,6 +131,7 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
               { borderTopColor: colors.border },
             ]}
           >
+            {/* Show "Cancel Request" for the sender. */}
             {ping.is_sender ? (
               <Button
                 title="Cancel Request"
@@ -125,6 +142,7 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
               />
             ) : (
               <>
+                {/* Show "Accept" and "Decline" buttons for the receiver. */}
                 <Button
                   title="Accept"
                   onPress={() => handleRespond('accept')}
@@ -143,6 +161,7 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
           </View>
         )}
 
+        {/* Display the response message if available. */}
         {ping.response_message && (
           <View
             style={[
@@ -163,19 +182,23 @@ const MeetupPingItem = ({ ping, onRespond, onCancel }) => {
   );
 };
 
+// Main MeetupListScreen component.
 const MeetupListScreen = () => {
+  // Using the useMeetupPings hook to manage state and side effects.
   const {
-    pings,
-    isLoading,
-    error,
-    refreshPings,
-    respondToPing,
-    cancelPing,
+    pings, // List of meetup pings.
+    isLoading, // Boolean indicating whether data is loading.
+    error, // Error message, if any.
+    refreshPings, // Function to refresh the meetup pings.
+    respondToPing, // Function to respond to a meetup ping (accept/decline).
+    cancelPing, // Function to cancel a sent meetup ping.
   } = useMeetupPings();
   const { colors } = useTheme();
 
+  // Function to render the content based on the loading and data states.
   const renderContent = () => {
     if (isLoading && !pings.length) {
+      // Display skeleton loading indicators when data is loading and there are no pings yet.
       return (
         <Stagger>
           {[...Array(3)].map((_, index) => (
@@ -185,6 +208,7 @@ const MeetupListScreen = () => {
       );
     }
 
+    // Render the FlatList with meetup pings.
     return (
       <FlatList
         data={pings}
@@ -197,6 +221,7 @@ const MeetupListScreen = () => {
         )}
         keyExtractor={(item) => item.id.toString()}
         refreshControl={
+          // Add a RefreshControl for pull-to-refresh functionality.
           <RefreshControl
             refreshing={isLoading}
             onRefresh={refreshPings}
@@ -206,6 +231,7 @@ const MeetupListScreen = () => {
           />
         }
         contentContainerStyle={styles.listContent}
+        // Display a message when there are no meetup requests.
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
@@ -218,6 +244,7 @@ const MeetupListScreen = () => {
   };
 
   return (
+    // Wrap the screen with ScreenErrorBoundary to handle potential errors.
     <ScreenErrorBoundary onReset={refreshPings}>
       <SafeAreaView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -228,6 +255,7 @@ const MeetupListScreen = () => {
   );
 };
 
+// StyleSheet for the MeetupListScreen component.
 const styles = StyleSheet.create({
   container: {
     flex: 1,

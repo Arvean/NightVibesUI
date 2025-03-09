@@ -22,34 +22,34 @@ import api from './axiosInstance';
  * - Allows users to navigate to venue details or check-in pages.
  */
 const HomeScreen = () => {
-  const { user } = useContext(AuthContext);
-  const navigation = useNavigation();
-  const { colors } = useTheme(); // Use the useTheme hook
-  // State to store trending venues
-  const [trendingVenues, setTrendingVenues] = useState([]);
-  // State to store friend activity
-  const [friendActivity, setFriendActivity] = useState([]);
-  // State to store nearby venues
-  const [nearbyVenues, setNearbyVenues] = useState([]);
-  // State to manage loading state
-  const [isLoading, setIsLoading] = useState(true);
-  // State to manage error messages
-  const [error, setError] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
-  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
+  const { user } = useContext(AuthContext); // Get user info from AuthContext
+  const navigation = useNavigation(); // Hook for navigation
+  const { colors } = useTheme(); // Use the useTheme hook for themed colors
 
-  // useEffect hook to check for location permissions
+  // State variables
+  const [trendingVenues, setTrendingVenues] = useState([]); // State to store trending venues
+  const [friendActivity, setFriendActivity] = useState([]); // State to store friend activity
+  const [nearbyVenues, setNearbyVenues] = useState([]); // State to store nearby venues
+  const [isLoading, setIsLoading] = useState(true); // State to manage loading state
+  const [error, setError] = useState(null); // State to manage error messages
+  const [userLocation, setUserLocation] = useState(null); // State to store user's location
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false); // State to track location permission
+
+  // useEffect hook to check for location permissions when the component mounts
   useEffect(() => {
     checkLocationPermission();
   }, []);
 
   // Function to check for location permissions
   const checkLocationPermission = async () => {
+    // Check the current status of the location permission
     const permissionStatus = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
 
     if (permissionStatus === RESULTS.GRANTED) {
+      // If permission is already granted, update the state
       setLocationPermissionGranted(true);
     } else {
+      // If permission is not granted, request it
       requestLocationPermission();
     }
   };
@@ -57,18 +57,21 @@ const HomeScreen = () => {
   // Function to request location permissions
   const requestLocationPermission = async () => {
     try {
+      // Request location permission
       const granted = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
       if (granted === RESULTS.GRANTED) {
+        // If permission is granted, update the state and get the current location
         setLocationPermissionGranted(true);
         getCurrentLocation();
       } else {
+        // If permission is denied, show an alert to the user
         Alert.alert(
           "Location Permission Required",
           "Please enable location permissions in settings to use this feature.",
           [
             {
               text: "Open Settings",
-              onPress: () => Linking.openSettings(),
+              onPress: () => Linking.openSettings(), // Open app settings
             },
             {
               text: "Cancel",
@@ -87,35 +90,38 @@ const HomeScreen = () => {
   const getCurrentLocation = () => {
     Geolocation.getCurrentPosition(
       position => {
+        // On success, set the user's location
         const { latitude, longitude } = position.coords;
         setUserLocation({ latitude, longitude });
       },
       error => {
+        // On error, log the error and show an alert
         console.log(error);
         Alert.alert("Error", "Failed to get current location.");
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 } // Geolocation options
     );
   };
 
-  // useEffect hook to fetch home data when the component mounts
+  // useEffect hook to fetch home data when the component mounts and when location permissions change
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        setIsLoading(true); // Set loading state to true
+        setError(null); // Clear any previous errors
 
         // Fetch trending venues
         const venuesRes = await api.get('/api/venues/?sort_by=popularity');
         // Fetch friend activity - get all checkins and filter
         const activityRes = await api.get('/api/checkins/');
 
+        // Check if the responses are successful
         if (venuesRes.status !== 200 || activityRes.status !== 200) {
           throw new Error('Failed to fetch data');
         }
 
         const venues = venuesRes.data;
-        // Filter friend activity
+        // Filter friend activity based on visibility and friendship
         const activity = activityRes.data.filter(
           (checkin) =>
             checkin.visibility === 'public' ||
@@ -126,6 +132,7 @@ const HomeScreen = () => {
 
         let nearby = [];
         if (userLocation) {
+          // Fetch nearby venues based on user's location
           const nearbyRes = await api.get(
             `/api/venues/?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=5000`
           ); // Added a default radius
@@ -134,17 +141,19 @@ const HomeScreen = () => {
           }
         }
 
-        setTrendingVenues(venues.slice(0, 5));
-        setFriendActivity(activity.slice(0, 10));
-        setNearbyVenues(nearby.slice(0, 5));
+        // Update state with fetched data
+        setTrendingVenues(venues.slice(0, 5)); // Limit to top 5
+        setFriendActivity(activity.slice(0, 10)); // Limit to top 10
+        setNearbyVenues(nearby.slice(0, 5)); // Limit to top 5
       } catch (err) {
         console.error(err);
-        setError('Failed to load data. Please try again later.');
+        setError('Failed to load data. Please try again later.'); // Set error message
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Set loading state to false
       }
     };
 
+    // Fetch data only if location permission is granted
     if (locationPermissionGranted) {
       fetchHomeData();
     }
@@ -159,6 +168,7 @@ const HomeScreen = () => {
         );
       }
 
+    // Show error message if there was an error during data fetching
       if (error) {
         return (
           <View style={styles.errorContainer}>
@@ -177,12 +187,14 @@ const HomeScreen = () => {
         </CardHeader>
       </Card>
 
+      {/* ScrollView for the main content */}
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           {/* Trending Venues */}
           <Card style={styles.card}>
             <CardHeader style={styles.cardHeader}>
               <CardTitle style={styles.cardTitle}>
+                {/* Icon and title container */}
                 <View style={styles.iconContainer}>
                   <TrendingUp style={styles.icon} color={colors.primary} />
                   <Text style={styles.sectionTitle}>Trending Tonight</Text>
@@ -190,6 +202,7 @@ const HomeScreen = () => {
               </CardTitle>
             </CardHeader>
             <CardContent style={styles.cardContent}>
+              {/* Map through trending venues and display them */}
               {trendingVenues.map((venue) => (
                 <View
                   key={venue.id}
@@ -203,6 +216,7 @@ const HomeScreen = () => {
                     <Text style={styles.venueName}>{venue.name}</Text>
                     <Text style={styles.venueCategory}>{venue.category}</Text>
                   </View>
+                  {/* Badge showing the current vibe of the venue */}
                   <Badge style={styles.badge} variant="secondary">
                     {venue.current_vibe || 'Lively'}
                   </Badge>
@@ -215,6 +229,7 @@ const HomeScreen = () => {
           <Card style={styles.card}>
             <CardHeader style={styles.cardHeader}>
               <CardTitle style={styles.cardTitle}>
+                {/* Icon and title container */}
                 <View style={styles.iconContainer}>
                   <Activity style={styles.icon} color={colors.green} />
                   <Text style={styles.sectionTitle}>Friend Activity</Text>
@@ -222,6 +237,7 @@ const HomeScreen = () => {
               </CardTitle>
             </CardHeader>
             <CardContent style={styles.cardContent}>
+              {/* Map through friend activity and display */}
               {friendActivity.map((activity) => (
                 <View key={activity.id} style={styles.activityItem}>
                   <View style={styles.activityIconContainer}>
@@ -248,6 +264,7 @@ const HomeScreen = () => {
           <Card style={styles.card}>
             <CardHeader style={styles.cardHeader}>
               <CardTitle style={styles.cardTitle}>
+                {/* Icon and title container */}
                 <View style={styles.iconContainer}>
                   <MapPin style={styles.icon} color={colors.red} />
                   <Text style={styles.sectionTitle}>Nearby Spots</Text>
@@ -255,6 +272,7 @@ const HomeScreen = () => {
               </CardTitle>
             </CardHeader>
             <CardContent style={styles.cardContent}>
+              {/* Map through nearby venues and display them */}
               {nearbyVenues.map((venue) => (
                 <View
                   key={venue.id}
@@ -280,6 +298,7 @@ const HomeScreen = () => {
     </View>
   );
 
+  // Function to handle user check-in
   async function handleCheckIn(venueId) {
     if (!user) {
       Alert.alert("Error", "You must be logged in to check in.");
@@ -306,6 +325,7 @@ const HomeScreen = () => {
   }
 };
 
+// Styles for the HomeScreen component
 const styles = StyleSheet.create({
     container: {
         flex: 1,

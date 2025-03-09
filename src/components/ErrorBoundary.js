@@ -4,30 +4,51 @@ import { Text } from '@/components/ui';
 import { AlertOctagon, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 
+/**
+ * ErrorBoundaryFallback Component:
+ * A class component that acts as an error boundary. It catches JavaScript errors
+ * in its child component tree, logs those errors, and displays a fallback UI.
+ */
 class ErrorBoundaryFallback extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
+  /**
+   * This lifecycle method is called after an error has been thrown by a descendant component.
+   * It receives the error that was thrown as a parameter and should return a value to update state.
+   */
   static getDerivedStateFromError(error) {
+    // Update state so the next render will show the fallback UI.
     return { hasError: true, error };
   }
 
+  /**
+   * This lifecycle method is called after an error has been thrown by a descendant component.
+   * It receives the error that was thrown and an object with information about the component stack.
+   */
   componentDidCatch(error, errorInfo) {
     // You can log the error to an error reporting service here
     console.error('Error caught by boundary:', error, errorInfo);
   }
 
   render() {
+    // If there's an error, render the ErrorView component.
     if (this.state.hasError) {
       return <ErrorView error={this.state.error} onReset={this.props.onReset} />;
     }
 
+    // If there's no error, render the children components normally.
     return this.props.children;
   }
 }
 
+/**
+ * ErrorView Component:
+ * A functional component that displays a fallback UI when an error occurs.
+ * It shows an error message and a button to try again.
+ */
 const ErrorView = ({ error, onReset }) => {
   const { colors } = useTheme();
 
@@ -36,20 +57,20 @@ const ErrorView = ({ error, onReset }) => {
       style={[
         styles.container,
         {
-          backgroundColor: colors.background,
+          backgroundColor: colors.background, // Use dynamic background color
         },
       ]}
     >
       <AlertOctagon
         size={48}
-        color={colors.error}
+        color={colors.error} // Use dynamic error color
         style={styles.icon}
       />
       <Text
         style={[
           styles.title,
           {
-            color: colors.text,
+            color: colors.text, // Use dynamic text color
           },
         ]}
       >
@@ -59,7 +80,7 @@ const ErrorView = ({ error, onReset }) => {
         style={[
           styles.message,
           {
-            color: colors.textSecondary,
+            color: colors.textSecondary, // Use dynamic text color
           },
         ]}
       >
@@ -69,7 +90,7 @@ const ErrorView = ({ error, onReset }) => {
         style={[
           styles.button,
           {
-            backgroundColor: colors.primary,
+            backgroundColor: colors.primary, // Use dynamic primary color
           },
         ]}
         onPress={onReset}
@@ -81,6 +102,13 @@ const ErrorView = ({ error, onReset }) => {
   );
 };
 
+/**
+ * withErrorBoundary Higher-Order Component:
+ * Wraps a component with the ErrorBoundaryFallback to handle errors.
+ * @param {React.Component} WrappedComponent - The component to wrap with the error boundary.
+ * @param {function} onReset - A function to be called when the "Try Again" button is pressed.
+ * @returns {React.Component} A new component that includes the error boundary.
+ */
 export const withErrorBoundary = (WrappedComponent, onReset) => {
   return (props) => (
     <ErrorBoundaryFallback onReset={onReset}>
@@ -89,10 +117,19 @@ export const withErrorBoundary = (WrappedComponent, onReset) => {
   );
 };
 
+/**
+ * ScreenErrorBoundary Component:
+ * A functional component that wraps its children with the ErrorBoundaryFallback.
+ * Useful for wrapping entire screens to catch errors.
+ * @param {object} props - The component's props.
+ * @param {ReactNode} props.children - The child components to be wrapped.
+ * @param {function} props.onReset - A function to be called when the "Try Again" button is pressed.
+ */
 export const ScreenErrorBoundary = ({ children, onReset }) => (
   <ErrorBoundaryFallback onReset={onReset}>{children}</ErrorBoundaryFallback>
 );
 
+// StyleSheet for the components
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -134,13 +171,13 @@ const styles = StyleSheet.create({
 // Example usage:
 // 1. For class components:
 // export default withErrorBoundary(MyComponent, () => {
-//   // Reset logic here
+//   // Reset logic here (e.g., re-fetch data, reset state)
 // });
 
 // 2. For functional components:
 // return (
 //   <ScreenErrorBoundary onReset={() => {
-//     // Reset logic here
+//     // Reset logic here (e.g., re-fetch data, reset state)
 //   }}>
 //     <MyComponent />
 //   </ScreenErrorBoundary>

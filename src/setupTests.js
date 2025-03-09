@@ -1,4 +1,9 @@
-// Import Jest globals at the very beginning of the file
+// Jest Setup File
+// This file is automatically run by Jest before each test file.
+// It's used to set up the testing environment, mock modules, and define global configurations.
+
+// Import Jest globals at the very beginning of the file to ensure they are available
+// even if modules like 'react-native' are mocked before the globals are usually available.
 if (typeof beforeEach !== 'function') {
   global.beforeEach = function(fn) { if (typeof fn === 'function') fn(); };
 }
@@ -7,11 +12,11 @@ if (typeof afterEach !== 'function') {
 }
 if (typeof jest !== 'object') {
   global.jest = {
-    mock: () => jest,
-    fn: () => jest.fn(),
-    spyOn: () => jest.fn(),
-    clearAllMocks: () => {},
-    resetAllMocks: () => {}
+    mock: () => jest, // Mock implementation
+    fn: () => jest.fn(), // Mock function
+    spyOn: () => jest.fn(), // Spy on a function
+    clearAllMocks: () => {}, // Clear all mocks
+    resetAllMocks: () => {} // Reset all mocks
   };
 }
 
@@ -24,22 +29,22 @@ const React = require('react');
 jest.mock('react-native', () => {
   return {
     StyleSheet: {
-      create: jest.fn(styles => styles),
-      flatten: jest.fn(styles => styles),
+      create: jest.fn(styles => styles), // Returns the styles object as is
+      flatten: jest.fn(styles => styles), // Returns the styles as is
     },
     Platform: {
-      OS: 'ios',
-      select: jest.fn(obj => obj.ios || obj.default),
+      OS: 'ios', // Mocking the platform as iOS
+      select: jest.fn(obj => obj.ios || obj.default), // Mocking platform-specific selections
     },
     Dimensions: {
-      get: jest.fn(() => ({ width: 375, height: 667 })),
+      get: jest.fn(() => ({ width: 375, height: 667 })), // Mocking screen dimensions
     },
-    NativeModules: {},
-    I18nManager: { isRTL: false },
-    PixelRatio: { get: jest.fn(() => 2) },
-    Alert: { alert: jest.fn() },
-    Linking: { openURL: jest.fn() },
-    Animated: {
+    NativeModules: {}, // Mocking NativeModules (empty object for now)
+    I18nManager: { isRTL: false }, // Mocking I18nManager (internationalization)
+    PixelRatio: { get: jest.fn(() => 2) }, // Mocking PixelRatio
+    Alert: { alert: jest.fn() }, // Mocking Alert
+    Linking: { openURL: jest.fn() }, // Mocking Linking
+    Animated: { // Mocking Animated API
       Value: jest.fn(() => ({
         interpolate: jest.fn(),
         setValue: jest.fn(),
@@ -48,6 +53,9 @@ jest.mock('react-native', () => {
       spring: jest.fn(() => ({ start: jest.fn() })),
       createAnimatedComponent: jest.fn(component => component),
     },
+    // Mocking core React Native components with simple implementations.  These mocks
+    // simply return the name of the component as a string, allowing us to test
+    // that they are rendered without actually rendering their complex native implementations.
     View: ({ children, ...props }) => React.createElement('View', props, children),
     Text: ({ children, ...props }) => React.createElement('Text', props, children),
     TouchableOpacity: ({ children, ...props }) => React.createElement('TouchableOpacity', props, children),
@@ -77,16 +85,16 @@ const mockComponent = (name) => {
   return component;
 };
 
-// Mock for useColorScheme
+// Mock for useColorScheme.  We default to 'light' mode for testing.
 jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
   __esModule: true,
-  default: jest.fn(() => 'light'),
+  default: jest.fn(() => 'light'), // Default to light mode for testing
 }));
 
-// Mock react-native-permissions
+// Mock react-native-permissions.  This uses a separate mock file for clarity.
 jest.mock('react-native-permissions', () => require('./__mocks__/react-native-permissions').default);
 
-// Mock react-native-device-info
+// Mock react-native-device-info.  Provides consistent device information for testing.
 jest.mock('react-native-device-info', () => ({
   getVersion: jest.fn(() => '1.0.0'),
   getBuildNumber: jest.fn(() => '1'),
@@ -98,14 +106,14 @@ jest.mock('react-native-device-info', () => ({
   getBundleId: jest.fn(() => 'com.nightvibes.app'),
 }));
 
-// Mock react-native-safe-area-context
+// Mock react-native-safe-area-context.  Provides consistent safe area insets.
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }) => children,
   SafeAreaView: ({ children }) => children,
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 
-// Mock react-map-gl
+// Mock react-map-gl.  Provides simplified components for map rendering in tests.
 jest.mock('react-map-gl', () => ({
     Map: ({ children }) => React.createElement('div', { 'data-testid': 'map' }, children),
     Marker: ({ children }) => React.createElement('div', { 'data-testid': 'marker' }, children),
@@ -116,13 +124,13 @@ jest.mock('react-map-gl', () => ({
     Layer: () => React.createElement('div', { 'data-testid': 'layer' }),
 }));
 
-// Mock ThemeContext
+// Mock ThemeContext. Uses a separate mock file.
 jest.mock('./context/ThemeContext', () => require('./__mocks__/ThemeContext'));
 
-// Mock AuthContext
+// Mock AuthContext. Uses a separate mock file.
 jest.mock('./AuthContext', () => require('./__mocks__/AuthContext'));
 
-// Mock React Navigation
+// Mock React Navigation.  Provides a mock navigation object to avoid errors during testing.
 jest.mock('@react-navigation/native', () => {
     const mockNavObj = {
         navigate: jest.fn(),
@@ -150,10 +158,10 @@ jest.mock('@react-navigation/native', () => {
     };
 });
 
-// Mock axiosInstance
+// Mock axiosInstance. Uses a separate mock file.
 jest.mock('./axiosInstance', () => require('./__mocks__/axiosInstance'));
 
-// Mock AsyncStorage
+// Mock AsyncStorage.  Provides a basic in-memory implementation for testing.
 jest.mock('@react-native-async-storage/async-storage', () => ({
     getItem: jest.fn(() => Promise.resolve(null)),
     setItem: jest.fn(() => Promise.resolve(null)),
@@ -165,12 +173,12 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     multiRemove: jest.fn(() => Promise.resolve(null)),
 }));
 
-// Mock geolocation
+// Mock geolocation. Provides a consistent location for testing.
 const geolocationMock = {
     getCurrentPosition: jest.fn(success => success({
         coords: {
-            latitude: 37.7749,
-            longitude: -122.4194,
+            latitude: 37.7749, // Example latitude (San Francisco)
+            longitude: -122.4194, // Example longitude (San Francisco)
             altitude: 0,
             accuracy: 5,
             altitudeAccuracy: 5,
@@ -188,7 +196,7 @@ const geolocationMock = {
 
 global.navigator.geolocation = geolocationMock;
 
-// Mock fetch
+// Mock fetch.  Provides a basic mock for network requests.
 global.fetch = jest.fn(() =>
     Promise.resolve({
         json: () => Promise.resolve({}),
@@ -204,14 +212,14 @@ jest.mock('@react-native-clipboard/clipboard', () => ({
     getString: jest.fn(() => Promise.resolve('')),
 }));
 
-// Mock react-native-reanimated
+// Mock react-native-reanimated.  Uses the mock provided by the library.
 jest.mock('react-native-reanimated', () => {
     const Reanimated = require('react-native-reanimated/mock');
-    Reanimated.default.call = () => { };
+    Reanimated.default.call = () => { }; // Avoids errors related to native calls
     return Reanimated;
 });
 
-// Mock react-native-gesture-handler
+// Mock react-native-gesture-handler. Provides basic implementations for gesture handling components.
 jest.mock('react-native-gesture-handler', () => {
     return {
         Swipeable: React.forwardRef((props, ref) => React.createElement('Swipeable', { ...props, ref }, props.children)),
@@ -297,24 +305,27 @@ global.Storage = class {
 // Set up localStorage mock
 global.localStorage = new Storage();
 
+// Mock Platform.OS and Platform.select
 jest.mock('react-native/Libraries/Utilities/Platform', () => {
     const Platform = jest.requireActual('react-native/Libraries/Utilities/Platform');
-    Platform.OS = 'ios'; 
+    Platform.OS = 'ios'; // Set the platform to iOS for testing
     Platform.select = jest.fn((obj) => obj.ios || obj.default);
     return Platform;
 });
 
+// Mock NativeModules for UIManager and PlatformConstants
 jest.mock('react-native/Libraries/BatchedBridge/NativeModules', () => {
     return {
         UIManager: {
-            RCTView: {},
+            RCTView: {}, // Mock RCTView
         },
         PlatformConstants: {
-            forceTouchAvailable: false,
+            forceTouchAvailable: false, // Mock forceTouchAvailable
         },
     };
 });
 
+// Mock UIManager
 jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
     RCTView: {},
     blur: jest.fn(),
@@ -349,7 +360,8 @@ jest.mock('react-native/Libraries/ReactNative/UIManager', () => ({
     })),
 }));
 
-// Mock for lucide-react-native icons
+// Mock for lucide-react-native icons.  This avoids rendering the actual SVG icons
+// during testing, which can cause issues.  We replace them with simple components.
 jest.mock('lucide-react-native', () => ({
     ArrowLeft: () => React.createElement('ArrowLeftIcon'),
     Menu: () => React.createElement('MenuIcon'),
@@ -371,7 +383,7 @@ jest.mock('lucide-react-native', () => ({
     Home: () => React.createElement('HomeIcon'),
     LogOut: () => React.createElement('LogOutIcon'),
     Heart: () => React.createElement('HeartIcon'),
-    MessageCircle: () => React.createElement('MessageCircleIcon'),
+    MessageSquare: () => React.createElement('MessageSquareIcon'),
     Camera: () => React.createElement('CameraIcon'),
     Check: () => React.createElement('CheckIcon'),
     X: () => React.createElement('XIcon'),

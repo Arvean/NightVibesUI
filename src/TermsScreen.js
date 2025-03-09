@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
+// Importing custom UI components.
 import { Text, Button } from '@/components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+// Data for the Terms and Conditions sections.
 const sections = [
   {
     title: '1. Acceptance of Terms',
@@ -42,14 +44,17 @@ const sections = [
   },
 ];
 
+// TermsScreen component to display the Terms and Conditions.
 export default function TermsScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      {/* ScrollView to allow scrolling through the content. */}
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <Text style={styles.header}>Terms & Conditions</Text>
           <Text style={styles.lastUpdated}>Last updated: February 10, 2025</Text>
 
+          {/* Map through the sections array and render each section. */}
           {sections.map((section, index) => (
             <View key={index} style={styles.section}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -65,6 +70,7 @@ export default function TermsScreen({ navigation }) {
         </View>
       </ScrollView>
 
+      {/* Button to go back to the previous screen. */}
       <View style={styles.buttonContainer}>
         <Button
           title="I Understand"
@@ -76,10 +82,11 @@ export default function TermsScreen({ navigation }) {
   );
 }
 
+// StyleSheet for the TermsScreen component.
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // White background
   },
   scrollView: {
     flex: 1,
@@ -90,12 +97,12 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: '#111827', // Dark gray color for the header
     marginBottom: 8,
   },
   lastUpdated: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#6b7280', // Gray color for the last updated text
     marginBottom: 24,
   },
   section: {
@@ -104,35 +111,35 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: '#111827', // Dark gray color for section titles
     marginBottom: 12,
   },
   sectionContent: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#374151',
+    color: '#374151', // Slightly lighter dark gray for section content
   },
   footer: {
     marginTop: 24,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: '#e5e7eb', // Light gray border for the footer
   },
   footerText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#6b7280', // Gray color for the footer text
     textAlign: 'center',
   },
   buttonContainer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    backgroundColor: '#fff',
+    borderTopColor: '#e5e7eb', // Light gray border for the button container
+    backgroundColor: '#fff', // White background for the button container
   },
   button: {
     height: 48,
     borderRadius: 8,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#3b82f6', // Blue background for the button
     justifyContent: 'center',
     alignItems: 'center',
   },

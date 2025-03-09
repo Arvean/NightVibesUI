@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, RefreshControl } from 'react-native';
+// Importing custom UI components.
 import { Text, Button, Input } from '@/components/ui';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+// Importing custom alert dialog components.
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,22 +18,28 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+// Importing icons from lucide-react-native.
 import { Search, UserPlus, UserMinus, MessageSquare, Loader, Users } from 'lucide-react-native';
+// Importing the custom hook for managing friends.
 import useFriends from './hooks/useFriends';
 
+// FriendCard component to display individual friend information.
 const FriendCard = ({ friend, onRemove, onMessage }) => (
   <Card className="mb-4">
     <CardContent className="p-4">
       <View className="flex-row items-center">
+        {/* Friend's avatar. */}
         <Avatar className="h-12 w-12">
           <AvatarImage src={friend.profile_picture} />
           <AvatarFallback>{friend.username[0]}</AvatarFallback>
         </Avatar>
         <View className="ml-4 flex-1">
           <Text className="font-semibold">{friend.username}</Text>
+          {/* Display friend's name if available. */}
           {friend.name && (
             <Text className="text-sm text-muted-foreground">{friend.name}</Text>
           )}
+          {/* Display friend's last seen time if available. */}
           {friend.last_seen && (
             <Text className="text-xs text-muted-foreground">
               Last seen: {new Date(friend.last_seen).toLocaleString()}
@@ -39,6 +47,7 @@ const FriendCard = ({ friend, onRemove, onMessage }) => (
           )}
         </View>
         <View className="flex-row gap-2">
+          {/* Button to message the friend. */}
           <Button
             variant="ghost"
             size="icon"
@@ -46,6 +55,7 @@ const FriendCard = ({ friend, onRemove, onMessage }) => (
           >
             <MessageSquare className="h-5 w-5" />
           </Button>
+          {/* Alert dialog for confirming friend removal. */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -81,6 +91,7 @@ const FriendCard = ({ friend, onRemove, onMessage }) => (
   </Card>
 );
 
+// EmptyState component to display when the user has no friends.
 const EmptyState = () => (
   <View className="flex-1 items-center justify-center p-8">
     <Users className="h-12 w-12 text-muted-foreground mb-4" />
@@ -96,33 +107,39 @@ const EmptyState = () => (
   </View>
 );
 
+// Main FriendListScreen component.
 export default function FriendListScreen({ navigation }) {
+  // Using the useFriends hook to manage state and side effects.
   const {
-    friends,
-    isLoading,
-    error,
-    searchQuery,
-    fetchFriends,
-    removeFriend,
-    searchFriends
+    friends, // List of the user's friends.
+    isLoading, // Boolean indicating whether data is loading.
+    error, // Error message, if any.
+    searchQuery, // The current search query.
+    fetchFriends, // Function to fetch the user's friends.
+    removeFriend, // Function to remove a friend.
+    searchFriends // Function to search for friends
   } = useFriends();
 
+  // Fetch friends when the component mounts.
   useEffect(() => {
     fetchFriends();
   }, [fetchFriends]);
 
+  // Handler for removing a friend.
   const handleRemoveFriend = async (friend) => {
     const success = await removeFriend(friend.id);
     if (success) {
-      // Show success toast
+      // Show success toast (implementation not shown)
     }
   };
 
+  // Handler for messaging a friend.
   const handleMessage = (friend) => {
     // Navigate to chat or show meetup options
     navigation.navigate('Chat', { friendId: friend.id });
   };
 
+  // Show loading indicator while data is loading.
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -131,6 +148,7 @@ export default function FriendListScreen({ navigation }) {
     );
   }
 
+  // Show error message if there's an error.
   if (error) {
     return (
       <View className="flex-1 items-center justify-center p-4">
@@ -140,9 +158,10 @@ export default function FriendListScreen({ navigation }) {
     );
   }
 
+  // Render the FriendListScreen UI.
   return (
     <View className="flex-1 bg-background">
-      {/* Header */}
+      {/* Header section with title and search input. */}
       <View className="p-4 border-b">
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-2xl font-bold">Friends</Text>
@@ -165,9 +184,10 @@ export default function FriendListScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Friend List */}
+      {/* Scrollable area for the friend list. */}
       <ScrollArea
         refreshControl={
+          // Add a RefreshControl for pull-to-refresh functionality.
           <RefreshControl
             refreshing={isLoading}
             onRefresh={fetchFriends}
@@ -175,6 +195,7 @@ export default function FriendListScreen({ navigation }) {
         }
       >
         <View className="p-4">
+          {/* Display the friend list if there are friends, otherwise show the empty state. */}
           {friends.length > 0 ? (
             friends.map(friend => (
               <FriendCard

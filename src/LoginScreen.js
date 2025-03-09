@@ -55,12 +55,13 @@ export default function LoginScreen({ navigation }) {
   // Main return statement for rendering the LoginScreen component
   return (
     <SafeAreaView style={styles.container}>
+      {/* Adjusts the view when the keyboard appears, preventing it from covering input fields */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <View style={styles.content}>
-          {/* Header */}
+          {/* Header Section */}
           <View style={styles.header}>
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to continue</Text>
@@ -91,6 +92,7 @@ export default function LoginScreen({ navigation }) {
                 autoCorrect={false}
                 editable={!isLoading}
               />
+              {/* Display username error if there is one */}
               {errors.username && (
                 <Text style={styles.errorMessage}>{errors.username}</Text>
               )}
@@ -110,6 +112,7 @@ export default function LoginScreen({ navigation }) {
                 secureTextEntry
                 editable={!isLoading}
               />
+              {/* Display password error if there is one */}
               {errors.password && (
                 <Text style={styles.errorMessage}>{errors.password}</Text>
               )}
@@ -153,61 +156,74 @@ export default function LoginScreen({ navigation }) {
 
 // Styles for the LoginScreen component
 const styles = StyleSheet.create({
+  // Main container style
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
+  // Style for the keyboard avoiding view
   keyboardView: {
     flex: 1,
   },
+  // Content container style
   content: {
     flex: 1,
     padding: 20,
     justifyContent: 'center',
   },
+  // Header container style
   header: {
     marginBottom: 40,
     alignItems: 'center',
   },
+  // Style for the title text
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#111827',
     marginBottom: 8,
   },
+  // Style for the subtitle text
   subtitle: {
     fontSize: 16,
     color: '#6b7280',
   },
+  // Form container style
   form: {
     gap: 20,
   },
+  // Input container style
   inputContainer: {
     gap: 4,
   },
+  // Input field style
   input: {
     height: 48,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 8,
     paddingHorizontal: 16,
-    paddingLeft: 44,
+    paddingLeft: 44, // Make space for the icon
     fontSize: 16,
     backgroundColor: '#fff',
   },
+  // Style for the input icons
   inputIcon: {
     position: 'absolute',
     left: 16,
     top: 14,
   },
+  // Style for input fields with errors
   inputError: {
     borderColor: '#ef4444',
   },
+  // Style for error messages
   errorMessage: {
     color: '#ef4444',
     fontSize: 12,
     marginTop: 4,
   },
+  // Style for the main button
   button: {
     height: 48,
     borderRadius: 8,
@@ -215,10 +231,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Style for the forgot password button
   forgotButton: {
     alignSelf: 'flex-end',
     marginTop: -10,
   },
+  // Container for displaying error messages
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -228,12 +246,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
   },
+  // Container for the registration navigation
   registerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
+  // Style for the register text
   registerText: {
     color: '#6b7280',
   },

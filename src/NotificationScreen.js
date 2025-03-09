@@ -119,6 +119,7 @@ const NotificationCard = ({ notification, onAction, onDelete }) => (
   <Card className={`mb-4 ${!notification.is_read ? 'bg-primary/5' : ''}`}>
     <CardContent className="p-4">
       <View className="flex-row items-start">
+        {/* Display the appropriate icon based on the notification type. */}
         <NotificationIcon type={notification.type} />
         <View className="flex-1 ml-3">
           <Text className="font-medium">{notification.title}</Text>
@@ -128,6 +129,7 @@ const NotificationCard = ({ notification, onAction, onDelete }) => (
           <Text className="text-xs text-muted-foreground mt-1">
             {new Date(notification.created_at).toLocaleString()}
           </Text>
+          {/* Render action buttons based on the notification type. */}
           <NotificationActions
             type={notification.type}
             data={notification.data}
@@ -136,6 +138,7 @@ const NotificationCard = ({ notification, onAction, onDelete }) => (
             onView={() => onAction('view', notification)}
           />
         </View>
+        {/* Button to delete the notification. */}
         <Button
           variant="ghost"
           size="icon"
@@ -173,14 +176,14 @@ const EmptyState = () => (
  */
 export default function NotificationScreen({ navigation }) {
   const {
-    notifications,
-    isLoading,
-    error,
-    fetchNotifications,
-    markAsRead,
-    deleteNotification,
-    clearAll,
-    unreadCount
+    notifications, // List of notifications.
+    isLoading, // Boolean indicating whether data is loading.
+    error, // Error message, if any.
+    fetchNotifications, // Function to fetch notifications.
+    markAsRead, // Function to mark a notification as read.
+    deleteNotification, // Function to delete a notification.
+    clearAll, // Function to clear all notifications.
+    unreadCount // Number of unread notifications.
   } = useNotifications();
 
   // useEffect hook to fetch notifications when the component mounts
@@ -238,6 +241,7 @@ export default function NotificationScreen({ navigation }) {
         <View className="flex-row items-center justify-between mb-4">
           <View className="flex-row items-center">
             <Text className="text-2xl font-bold">Notifications</Text>
+            {/* Display a badge if there are unread notifications. */}
             {unreadCount > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {unreadCount} new
@@ -245,6 +249,7 @@ export default function NotificationScreen({ navigation }) {
             )}
           </View>
           <View className="flex-row gap-2">
+            {/* Button to clear all notifications. */}
             {notifications.length > 0 && (
               <Button
                 variant="outline"

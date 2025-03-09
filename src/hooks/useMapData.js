@@ -7,18 +7,19 @@ import { venuesAPI, friendsAPI } from '../api';
  * @returns {Object} Map data and control functions
  */
 const useMapData = () => {
+  // Viewport state (latitude, longitude, zoom level)
   const [viewport, setViewport] = useState({
-    latitude: 40.7128,
-    longitude: -74.0060,
-    zoom: 13
+    latitude: 40.7128, // Default latitude (e.g., New York City)
+    longitude: -74.0060, // Default longitude (e.g., New York City)
+    zoom: 13, // Default zoom level
   });
-  const [venues, setVenues] = useState([]);
-  const [friends, setFriends] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('distance'); // 'distance' or 'popularity'
+  const [venues, setVenues] = useState([]); // State for venues
+  const [friends, setFriends] = useState([]); // State for friends' locations
+  const [selectedItem, setSelectedItem] = useState(null); // State for selected venue/friend on the map
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+  const [error, setError] = useState(null); // Error state
+  const [searchQuery, setSearchQuery] = useState(''); // State for search query
+  const [sortBy, setSortBy] = useState('distance'); // State for sorting criteria ('distance' or 'popularity')
 
   // Fetch data based on coordinates
   const fetchData = async (latitude, longitude) => {
@@ -34,14 +35,14 @@ const useMapData = () => {
       const venueParams = {
         latitude,
         longitude,
-        include_vibe: true,
+        include_vibe: true, // Assuming these are custom parameters for your API
         include_popularity: true
       };
 
       // Make parallel API requests
       const [venuesRes, friendsRes] = await Promise.all([
-        venuesAPI.getAll(venueParams),
-        friendsAPI.getNearby()
+        venuesAPI.getAll(venueParams), // Fetch venues with parameters
+        friendsAPI.getNearby() // Fetch nearby friends
       ]);
 
       // Sort venues based on current sort preference
@@ -77,9 +78,9 @@ const useMapData = () => {
               return;
             }
             navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 20000,
-              maximumAge: 1000,
+              enableHighAccuracy: true, // Get high accuracy if available
+              timeout: 20000, // Timeout after 20 seconds
+              maximumAge: 1000, // Accept cached location within 1 second
             });
           });
           
@@ -135,7 +136,7 @@ const useMapData = () => {
 
     const interval = setInterval(() => {
       fetchData(viewport.latitude, viewport.longitude);
-    }, 30000);
+    }, 30000); // Poll every 30 seconds
 
     return () => clearInterval(interval);
   }, [viewport.latitude, viewport.longitude]);
@@ -159,19 +160,19 @@ const useMapData = () => {
   }, [sortBy]);
 
   return {
-    viewport,
-    setViewport,
-    venues: filteredVenues,
-    friends,
-    selectedItem,
-    setSelectedItem,
-    isLoading,
-    error,
-    searchQuery,
-    setSearchQuery,
-    sortBy,
-    setSortBy,
-    refreshData: () => fetchData(viewport.latitude, viewport.longitude)
+    viewport, // The current map viewport (latitude, longitude, zoom).
+    setViewport, // Function to update the viewport.
+    venues: filteredVenues, // The list of venues, filtered by the search query.
+    friends, // The list of nearby friends.
+    selectedItem, // The currently selected item (venue or friend) on the map.
+    setSelectedItem, // Function to set the selected item.
+    isLoading, // Boolean indicating if the map data is being loaded.
+    error, // Error message, if any.
+    searchQuery, // The current search query.
+    setSearchQuery, // Function to set the search query.
+    sortBy, // The current sorting criteria ('distance' or 'popularity').
+    setSortBy, // Function to set the sorting criteria.
+    refreshData: () => fetchData(viewport.latitude, viewport.longitude) // Function to manually refresh data.
   };
 };
 
